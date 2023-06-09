@@ -76,12 +76,12 @@ const MAIN = {
         NOTE.annotate(EF, "edges_faces");
         NOTE.annotate(FV, "faces_vertices");
         NOTE.annotate(FE, "faces_edges");
-        const [Pf, Ff] = X.V_FV_EV_EA_2_Vf_Ff(V, FV, EV, EA);
-        const Vf = M.normalize_points(Pf);
+        const [Vf, Ff] = X.V_FV_EV_EA_2_Vf_Ff(V, FV, EV, EA);
+        const Vf_norm = M.normalize_points(Vf);
         NOTE.annotate(Vf, "vertices_coords_folded");
         NOTE.annotate(Ff, "faces_flip");
         NOTE.lap();
-        const FOLD = {V, Vf, VK, EV, EA, EF, FV, FE, Ff};
+        const FOLD = {V, Vf, Vf_norm, VK, EV, EA, EF, FV, FE, Ff};
         NOTE.time("Drawing flat");
         GUI.update_flat(FOLD);
         NOTE.time("Drawing cell");
@@ -106,13 +106,14 @@ const MAIN = {
     },
     compute_cells: (FOLD) => {
         NOTE.start("*** Computing cell graph ***");
-        const {V, Vf, EV, EF, FE, FV, Ff} = FOLD;
+        const {Vf, EV, EF, FV} = FOLD;
         const L = EV.map((P) => M.expand(P, Vf));
-        const eps = M.min_line_length(L) / M.EPS;
-        NOTE.time(`Using eps ${eps} from min line length ${
-            eps*M.EPS} (factor ${M.EPS})`);
+        FOLD.eps = M.min_line_length(L) / M.EPS;
+        NOTE.time(`Using eps ${FOLD.eps} from min line length ${
+            FOLD.eps*M.EPS} (factor ${M.EPS})`);
         NOTE.time("Constructing points and segments from edges");
-        const [P, SP, SE] = X.L_2_V_EV_EL(L, eps);
+        const [P, SP, SE] = X.L_2_V_EV_EL(L, FOLD.eps);
+        const P_norm = M.normalize_points(P);
         NOTE.annotate(P, "points_coords");
         NOTE.annotate(SP, "segments_points");
         NOTE.annotate(SE, "segments_edges");
@@ -130,7 +131,7 @@ const MAIN = {
         const [CF, FC] = X.EF_FV_SP_SE_CP_SC_2_CF_FC(EF, FV, SP, SE, CP, SC);
         NOTE.count(CF, "face-cell adjacencies");
         NOTE.lap();
-        const CELL = {P, SP, SE, CP, CS, SC, CF, FC};
+        const CELL = {P, P_norm, SP, SE, CP, CS, SC, CF, FC};
         NOTE.time("Updating cell");
         GUI.update_cell(FOLD, CELL);
         NOTE.lap();
@@ -143,8 +144,8 @@ const MAIN = {
         window.setTimeout(MAIN.compute_constraints, 0, FOLD, CELL);
     },
     compute_constraints: (FOLD, CELL) => {
-        const {V, Vf, EV, EA, EF, FV, FE, Ff} = FOLD;
-        const {P, SP, SE, CP, CS, SC, CF, FC} = CELL;
+        const {Vf, EF, FV} = FOLD;
+        const {SE, SC, CF, FC} = CELL;
         NOTE.time("Computing edge-edge overlaps");
         const ExE = X.SE_2_ExE(SE);
         NOTE.count(ExE, "edge-edge adjacencies");
@@ -176,8 +177,8 @@ const MAIN = {
         window.setTimeout(MAIN.compute_states, 0, FOLD, CELL, BF, BT);
     },
     compute_states: (FOLD, CELL, BF, BT) => {
-        const {V, Vf, EV, EA, EF, FE, FV, Ff} = FOLD;
-        const {P, SP, SE, CP, CS, SC, CF, FC} = CELL;
+        const {EA, EF, Ff} = FOLD;
+        const {CF, FC} = CELL;
         const BA0 = X.EF_EA_Ff_BF_2_BA0(EF, EA, Ff, BF);
         const val = document.getElementById("limit_select").value;
         const lim = (val == "all") ? Infinity : +val;
@@ -209,9 +210,9 @@ const MAIN = {
         if (n > 0) {
             const GI = GB.map(() => 0);
             NOTE.time("Computing state");
-            const edges = SOLVER.BF_GB_GA_GI_2_edges(BF, GB, GA, GI);
-            FOLD.FO = SOLVER.edges_Ff_2_FO(edges, Ff);
-            CELL.CD = SOLVER.CF_edges_flip_2_CD(CF, edges);
+            const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI);
+            FOLD.FO = X.edges_Ff_2_FO(edges, Ff);
+            CELL.CD = X.CF_edges_flip_2_CD(CF, edges);
             document.getElementById("state_controls").style.display = "inline"; 
             document.getElementById("flip").onchange = (e) => {
                 NOTE.start("Flipping model");
