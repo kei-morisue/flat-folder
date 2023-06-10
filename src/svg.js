@@ -21,16 +21,38 @@ export const SVG = {   // DRAWING
         return el;
     },
     get_val: (val, i, def) => {
-        if (val == undefined)   { return def;    }
+        if (val == undefined) { return def; }
         if (Array.isArray(val)) { return val[i]; }
         return val;
     },
+    draw_canvas: ($el, [x, y, w, h], viewBox, color) => {
+        const attrs = {
+            xmlns: SVG.NS,
+            style: `background: ${color}`,
+            height: h,
+            width: w,
+            x: x,
+            y: y,
+            viewBox: viewBox.join(" ")
+        }
+        return SVG.append("svg", $el, attrs)
+    },
+    draw_viewbox: ($el, viewBox, color) => {
+        const attrs = {
+            xmlns: SVG.NS,
+            style: `background: ${color}`,
+            viewBox: viewBox.join(" ")
+        }
+        return SVG.append("svg", $el, attrs)
+    },
+
     draw_point: (svg, [x, y], color, r) => {
-        return SVG.append("circle", svg, {cx: x, cy: y, r: r, "fill": color});
+        return SVG.append("circle", svg, { cx: x, cy: y, r: r, "fill": color });
     },
     draw_label: (svg, [x, y], color, i) => {
         const t = SVG.append("text", svg, {
-            x: x, y: y, "fill": color, "font-size": "15pt"});
+            x: x, y: y, "fill": color, "font-size": "15pt"
+        });
         t.innerHTML = i;
         return t;
     },
@@ -53,7 +75,7 @@ export const SVG = {   // DRAWING
         for (const [i, l] of L.entries()) {
             if (options.filter && !options.filter(i)) { continue; }
             const [[x1, y1], [x2, y2]] = l.map(p => M.mul(p, SVG.SCALE));
-            const p = SVG.append("line", g, {x1, x2, y1, y2});
+            const p = SVG.append("line", g, { x1, x2, y1, y2 });
             const color = SVG.get_val(options.stroke, i, "black");
             const width = SVG.get_val(options.stroke_width, i, 1);
             p.setAttribute("stroke", color);
@@ -78,7 +100,7 @@ export const SVG = {   // DRAWING
             const color = SVG.get_val(options.fill, i, "black");
             if (color == undefined) { continue; }
             const V = F.map(v => v.join(",")).join(" ");
-            const p = SVG.append("polygon", g, {points: V, fill: color});
+            const p = SVG.append("polygon", g, { points: V, fill: color });
             if (options.stroke != undefined) {
                 const stroke = SVG.get_val(options.stroke, i);
                 const width = SVG.get_val(options.stroke_width, i, 1);

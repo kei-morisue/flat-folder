@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Flat-Folder MOD</title>
+    <link rel="icon" href="./icon-512x512.png">
+</head>
+
+<body style="background:darkgray">
+    <div>
+        <span style="font-family:sans-serif">
+            <b>Flat-Folder MOD&nbsp;&nbsp;</b>
+        </span>
+        <input type="button" id="side" value="+" style="width: 25px;" />
+        <input type="file" id="import" />
+        <input type="button" id="export_button" value="Export" style="display:none">
+        <div id="export" style="display:inline"></div>
+    </div>
+    <div id="fold_controls" style="display:none">
+        <input type="button" id="fold_button" value="Fold">
+        <label for="limit_select">Limit</label>
+        <select id="limit_select"></select>
+        <label for="text">Text</label>
+        <input type="checkbox" id="text">
+        <span id="num_states"></span>
+        <div id="state_controls">
+            <label for="flip">Flip</label>
+            <input type="checkbox" id="flip">
+            <label for="component_select">Component</label>
+            <select id="component_select"></select>
+        </div>
+        <div id="state_config" style="display:none">
+            <label for="state_select" id="state_label"></label>
+            <input id="state_select" type="number"></input>
+        </div>
+    </div>
+    <div id="main">
+    </div>
+    <div>
+        <textarea id="console" rows=10 readonly style="width:100%;background-color:darkgray;resize:none;
+        font-family:monospace"></textarea>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+</body>
+
+</html>

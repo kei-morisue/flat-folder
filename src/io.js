@@ -5,7 +5,7 @@ import { X } from "./conversion.js";
 
 export const IO = {    // INPUT-OUTPUT
     write: (FOLD) => {
-        const {V, Vf, EV, EA, FV, FO} = FOLD;
+        const { V, Vf, EV, EA, FV, FO } = FOLD;
         const path = document.getElementById("import").value.split("\\");
         const name = path[path.length - 1].split(".")[0];
         FOLD = {
@@ -13,25 +13,29 @@ export const IO = {    // INPUT-OUTPUT
             file_creator: "flat-folder",
             file_title: `${name}_cp`,
             file_classes: ["singleModel"],
-            vertices_coords:  V,
-            edges_vertices:   EV,
+            vertices_coords: V,
+            edges_vertices: EV,
             edges_assignment: EA,
-            faces_vertices:   FV,
+            faces_vertices: FV,
         };
         const data = {};
         data.cp = new Blob([JSON.stringify(FOLD, undefined, 2)], {
-            type: "application/json"});
+            type: "application/json"
+        });
         FOLD.vertices_coords = Vf;
         FOLD.file_title = `${name}_state`;
         if (FO != undefined) {
             FOLD.faceOrders = FO;   // TODO: remove implied face orders?
         }
         data.state = new Blob([JSON.stringify(FOLD, undefined, 2)], {
-            type: "application/json"});
+            type: "application/json"
+        });
         data.img = new Blob([document.getElementById("main").outerHTML], {
-            type: "image/svg+xml"});
+            type: "image/svg+xml"
+        });
         data.log = new Blob([NOTE.lines.join("\n")], {
-            type: "text/plain"});
+            type: "text/plain"
+        });
         const ex = SVG.clear("export");
         for (const [type, ext] of [
             ["cp", "fold"],
@@ -93,7 +97,7 @@ export const IO = {    // INPUT-OUTPUT
             const parts = pair.split(":");
             if (parts.length == 2) {
                 const attr = parts[0].trim();
-                const  val = parts[1].trim();
+                const val = parts[1].trim();
                 if (attr == "stroke") {
                     if (val == "red" || val == "#FF0000") {
                         a = "M";
@@ -199,30 +203,8 @@ export const IO = {    // INPUT-OUTPUT
         }
         return [V, EV, EA, VV, FV];
     },
-    doc_type_2_V_VV_EV_EA_EF_FV_FE: (doc, type) => {
+    doc_type_2_FOLD: (doc, type, side = "+") => {
         let V, VV, EV, EA, FV;
-        if (type == "fold") {
-            [V, EV, EA, VV, FV] = IO.FOLD_2_V_EV_EA_VV_FV(doc);
-            if (V == undefined) { return []; }
-        } else {
-            let L, EL;
-            if      (type == "svg") { L = IO.SVG_2_L(doc); }
-            else if (type ==  "cp") { L =  IO.CP_2_L(doc); }
-            else if (type == "opx") { L = IO.OPX_2_L(doc); }
-            else {
-                NOTE.time(`ERROR: File extension .${type} not supported!`);
-                NOTE.time("       Please use from [.fold, .svg, .cp, .opx]");
-                return [];
-            }
-            NOTE.annotate(L, "lines");
-            NOTE.lap();
-            const eps = M.min_line_length(L) / M.EPS;
-            NOTE.time(`Using eps ${eps} from min line length ${eps*M.EPS}`);
-            NOTE.time("Constructing FOLD from lines");
-            [V, EV, EL] = X.L_2_V_EV_EL(L, eps);
-            EA = EL.map(l => L[l[0]][2]);
-        }
-        V = M.normalize_points(V);
         const flip_EA = (EA) => {
             return EA.map((a) => (a == "M") ? "V" : ((a == "V") ? "M" : a));
         };
@@ -232,30 +214,80 @@ export const IO = {    // INPUT-OUTPUT
                 F.reverse();
             }
         };
-        if (FV == undefined) {
-            if (document.getElementById("side").value == "+") {
+        if (type == "fold") {
+            [V, EV, EA, VV, FV] = IO.FOLD_2_V_EV_EA_VV_FV(doc);
+            if (V == undefined) { return []; }
+            if (M.polygon_area2(M.expand(FV[0], V)) < 0) {
+                EA = flip_EA(EA);
+                reverse_FV(FV);
+            }
+            if (side == "-") {
+                EA = flip_EA(EA);
+                reverse_FV(FV);
+                V = flip_Y(V);
+            }
+        } else {
+            let L, EL;
+            if (type == "svg") { L = IO.SVG_2_L(doc); }
+            else if (type == "cp") { L = IO.CP_2_L(doc); }
+            else if (type == "opx") { L = IO.OPX_2_L(doc); }
+            else {
+                NOTE.time(`ERROR: File extension .${type} not supported!`);
+                NOTE.time("       Please use from [.fold, .svg, .cp, .opx]");
+                return [];
+            }
+            NOTE.annotate(L, "lines");
+            NOTE.lap();
+            const eps = M.min_line_length(L) / M.EPS;
+            NOTE.time(`Using eps ${eps} from min line length ${eps * M.EPS}`);
+            NOTE.time("Constructing FOLD from lines");
+            [V, EV, EL] = X.L_2_V_EV_EL(L, eps);
+            EA = EL.map(l => L[l[0]][2]);
+            if (side == "+") {
                 EA = flip_EA(EA);
             } else {
                 V = flip_Y(V);
             }
             [VV, FV] = X.V_EV_2_VV_FV(V, EV);
-        } else {
-            if (M.polygon_area2(M.expand(FV[0], V)) < 0) {
-                EA = flip_EA(EA);
-                reverse_FV(FV);
-            }
-            if (document.getElementById("side").value == "-") {
-                EA = flip_EA(EA);
-                reverse_FV(FV);
-                V = flip_Y(V);
-            }
         }
+        V = M.normalize_points(V);
         const [EF, FE] = X.EV_FV_2_EF_FE(EV, FV);
+        NOTE.annotate(FV, "faces_vertices");
+        NOTE.annotate(FE, "faces_edges");
+
+        EA = IO.assign_boundaries(EF, EA)
+        const [VK, Vf, Ff, Vf_norm] = IO.V_VV_EV_EA_2_f(V, VV, EV, EA, FV)
+        return { V, Vf, Vf_norm, VK, EV, EA, EF, FV, FE, Ff };
+    },
+
+    V_EV_EA_2_FOLD: (V, EV, EA) => {
+        [VV, FV] = X.V_EV_2_VV_FV(V, EV)
+        V = M.normalize_points(V);
+        const [EF, FE] = X.EV_FV_2_EF_FE(EV, FV);
+        const [VK, Vf, Ff, Vf_norm] = IO.V_VV_EV_EA_2_f(V, VV, EV, EA, FV)
+        return { V, Vf, Vf_norm, VK, EV, EA, EF, FV, FE, Ff };
+    },
+
+    assign_boundaries: (EF, EA) => {
+        NOTE.annotate(EF, "edges_faces");
         for (const [i, F] of EF.entries()) {    // boundary edge assignment
             if (F.length == 1) {
                 EA[i] = "B";
             }
         }
-        return [V, VV, EV, EA, EF, FV, FE];
+        return EA
+    },
+
+    V_VV_EV_EA_2_f: (V, VV, EV, EA, FV) => {
+        const VK = X.V_VV_EV_EA_2_VK(V, VV, EV, EA);//Kawasaki properties
+        NOTE.annotate(V, "vertices_coords");
+        NOTE.annotate(EV, "edges_vertices");
+        NOTE.annotate(EA, "edges_assignments");
+        const [Vf, Ff] = X.V_FV_EV_EA_2_Vf_Ff(V, FV, EV, EA);
+        const Vf_norm = M.normalize_points(Vf);
+        NOTE.annotate(Vf, "vertices_coords_folded");
+        NOTE.annotate(Ff, "faces_flip");
+        NOTE.lap();
+        return [VK, Vf, Ff, Vf_norm]
     },
 };
