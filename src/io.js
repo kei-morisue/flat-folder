@@ -256,18 +256,9 @@ export const IO = {    // INPUT-OUTPUT
         NOTE.annotate(FE, "faces_edges");
 
         EA = IO.assign_boundaries(EF, EA)
-        const [VK, Vf, Ff, Vf_norm] = IO.V_VV_EV_EA_2_f(V, VV, EV, EA, FV)
+        const [VK, Vf, Ff, Vf_norm] = X.V_VV_EV_EA_2_f(V, VV, EV, EA, FV)
         return { V, Vf, Vf_norm, VK, EV, EA, EF, FV, FE, Ff };
     },
-
-    V_EV_EA_2_FOLD: (V, EV, EA) => {
-        [VV, FV] = X.V_EV_2_VV_FV(V, EV)
-        V = M.normalize_points(V);
-        const [EF, FE] = X.EV_FV_2_EF_FE(EV, FV);
-        const [VK, Vf, Ff, Vf_norm] = IO.V_VV_EV_EA_2_f(V, VV, EV, EA, FV)
-        return { V, Vf, Vf_norm, VK, EV, EA, EF, FV, FE, Ff };
-    },
-
     assign_boundaries: (EF, EA) => {
         NOTE.annotate(EF, "edges_faces");
         for (const [i, F] of EF.entries()) {    // boundary edge assignment
@@ -278,16 +269,4 @@ export const IO = {    // INPUT-OUTPUT
         return EA
     },
 
-    V_VV_EV_EA_2_f: (V, VV, EV, EA, FV) => {
-        const VK = X.V_VV_EV_EA_2_VK(V, VV, EV, EA);//Kawasaki properties
-        NOTE.annotate(V, "vertices_coords");
-        NOTE.annotate(EV, "edges_vertices");
-        NOTE.annotate(EA, "edges_assignments");
-        const [Vf, Ff] = X.V_FV_EV_EA_2_Vf_Ff(V, FV, EV, EA);
-        const Vf_norm = M.normalize_points(Vf);
-        NOTE.annotate(Vf, "vertices_coords_folded");
-        NOTE.annotate(Ff, "faces_flip");
-        NOTE.lap();
-        return [VK, Vf, Ff, Vf_norm]
-    },
 };

@@ -12,7 +12,7 @@ export const GUI = {   // INTERFACE
 
     },
     COLORS: {
-        background: "lightgray",
+        background: "green",
         active: "yellow",
         B: "lightskyblue",
         TE: ["green", "red", "orange", "cyan"],
@@ -93,52 +93,49 @@ export const GUI = {   // INTERFACE
             }
         }
     },
-    update_flat: (FOLD) => {
-        SVG.clear("export");
+    update_flat: ($svg, FOLD) => {
         const { V, VK, EV, EA, FV } = FOLD;
-        const svg = SVG.clear("flat");
         const F = FV.map(f => M.expand(f, V));
-        SVG.draw_polygons(svg, F, { id: "flat_f", fill: GUI.COLORS.face.bottom });
-        SVG.append("g", svg, { id: "flat_shrunk" });
+        SVG.draw_polygons($svg, F, { id: "flat_f", fill: GUI.COLORS.face.bottom });
+        SVG.append("g", $svg, { id: "flat_shrunk" });
         const K = [];
         const eps = 1 / M.EPS;
         for (const [i, k] of VK.entries()) {
             if (k > eps) { K.push(V[i]); }
         }
-        SVG.draw_points(svg, K, { id: "flat_check", fill: "red", r: 10 });
+        SVG.draw_points($svg, K, { id: "flat_check", fill: "red", r: 10 });
         const lines = EV.map(l => M.expand(l, V));
         const colors = EA.map(a => GUI.COLORS.edge[a]);
-        SVG.draw_segments(svg, lines, {
+        SVG.draw_segments($svg, lines, {
             id: "flat_e_flat", stroke: colors,
             stroke_width: GUI.WIDTH.BOLD, filter: (i) => (EA[i] != "F")
         });
-        SVG.draw_segments(svg, lines, {
+        SVG.draw_segments($svg, lines, {
             id: "flat_e_folded", stroke: colors,
             stroke_width: GUI.WIDTH.CREASE, filter: (i) => (EA[i] == "F")
         });
-        SVG.append("g", svg, { id: "flat_text" });
-        SVG.append("g", svg, { id: "flat_notes" });
+        SVG.append("g", $svg, { id: "flat_text" });
+        SVG.append("g", $svg, { id: "flat_notes" });
         GUI.update_text(FOLD);
     },
-    update_cell: (FOLD, CELL) => {
-        SVG.clear("export");
-        const svg = SVG.clear("cell");
+    update_cell: ($svg, FOLD, CELL) => {
+        SVG.clear_element($svg)
         if (CELL == undefined) {
             const F = FOLD.FV.map(f => M.expand(f, FOLD.Vf_norm));
-            SVG.draw_polygons(svg, F, { id: "cell_f", opacity: 0.05 });
+            SVG.draw_polygons($svg, F, { id: "cell_f", opacity: 0.05 });
         } else {
             const { P_norm, SP, SE, CP, SC, CF, FC } = CELL;
             const cells = CP.map(f => M.expand(f, P_norm));
             const lines = SP.map(l => M.expand(l, P_norm));
             const Ccolors = GUI.CF_2_Cbw(CF);
-            SVG.draw_polygons(svg, cells, { fill: Ccolors, id: "cell_c" });
-            SVG.draw_segments(svg, lines, {
+            SVG.draw_polygons($svg, cells, { fill: Ccolors, id: "cell_c" });
+            SVG.draw_segments($svg, lines, {
                 id: "cell_s", stroke: "black", stroke_width: GUI.WIDTH.DEFAULT
             });
         }
-        SVG.append("g", svg, { id: "cell_text" });
-        SVG.append("g", svg, { id: "cell_notes" });
-        SVG.append("g", svg, { id: "component_notes" });
+        SVG.append("g", $svg, { id: "cell_text" });
+        SVG.append("g", $svg, { id: "cell_notes" });
+        SVG.append("g", $svg, { id: "component_notes" });
         GUI.update_text(FOLD, CELL);
     },
     CF_2_Ccolors: (CF) => {

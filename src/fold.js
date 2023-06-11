@@ -6,172 +6,108 @@ import { IO } from "./io.js";
 import { X } from "./conversion.js";
 import { GUI } from "./gui.js";
 
-import { SOLVER } from "./solver.js";
+
 
 export const F = {
-    compute_flat: (FOLD) => {
-        if (FOLD == undefined) { return; }
-        NOTE.time("Drawing flat");
-        GUI.update_flat(FOLD);
-        NOTE.time("Drawing cell");
-        GUI.update_cell(FOLD);
-        SVG.clear("fold");
-        document.getElementById("num_states").innerHTML = "";
+    activate_controls: (FOLD) => {
         document.getElementById("fold_controls").style.display = "inline";
+        document.getElementById("num_states").innerHTML = "";
         document.getElementById("state_controls").style.display = "none";
         document.getElementById("state_config").style.display = "none";
         document.getElementById("export_button").style.display = "inline";
         document.getElementById("export_button").onclick = () => IO.write(FOLD);
+    },
+    compute_flat: (FOLD, $flat, $cell) => {
+        if (FOLD == undefined) { return; }
+        SVG.clear("export");
+        SVG.clear_element($flat)
+        GUI.update_flat($flat, FOLD);
+        GUI.update_cell($cell, FOLD);
+        SVG.clear("fold");
+        F.activate_controls(FOLD)
         document.getElementById("text").onchange = () => {
-            NOTE.start("Toggling Text");
             GUI.update_text(FOLD);
-            NOTE.end();
         };
         document.getElementById("fold_button").onclick = () => {
-            F.compute_cells(FOLD);
+            const CELL = X.FOLD_2_CELL(FOLD)
+            F.compute_cells($cell, FOLD, CELL);
         };
-        NOTE.lap();
-        NOTE.end();
     },
-    compute_cells: (FOLD) => {
-        NOTE.start("*** Computing cell graph ***");
-        const { Vf, EV, EF, FV } = FOLD;
-        const L = EV.map((P) => M.expand(P, Vf));
-        FOLD.eps = M.min_line_length(L) / M.EPS;
-        NOTE.time(`Using eps ${FOLD.eps} from min line length ${FOLD.eps * M.EPS} (factor ${M.EPS})`);
-        NOTE.time("Constructing points and segments from edges");
-        const [P, SP, SE] = X.L_2_V_EV_EL(L, FOLD.eps);
-        const P_norm = M.normalize_points(P);
-        NOTE.annotate(P, "points_coords");
-        NOTE.annotate(SP, "segments_points");
-        NOTE.annotate(SE, "segments_edges");
-        NOTE.lap();
-        NOTE.time("Constructing cells from segments");
-        const [, CP] = X.V_EV_2_VV_FV(P, SP);
-        NOTE.annotate(CP, "cells_points");
-        NOTE.lap();
-        NOTE.time("Computing segments_cells");
-        const [SC, CS] = X.EV_FV_2_EF_FE(SP, CP);
-        NOTE.annotate(SC, "segments_cells");
-        NOTE.annotate(CS, "cells_segments");
-        NOTE.lap();
-        NOTE.time("Making face-cell maps");
-        const [CF, FC] = X.EF_FV_SP_SE_CP_SC_2_CF_FC(EF, FV, SP, SE, CP, SC);
-        NOTE.count(CF, "face-cell adjacencies");
-        NOTE.lap();
-        const CELL = { P, P_norm, SP, SE, CP, CS, SC, CF, FC };
-        NOTE.time("Updating cell");
-        GUI.update_cell(FOLD, CELL);
-        NOTE.lap();
+
+
+
+    compute_cells: ($cell, FOLD, CELL) => {
+        SVG.clear("export");
+        GUI.update_cell($cell, FOLD, CELL);
         document.getElementById("text").onchange = (e) => {
-            NOTE.start("Toggling Text");
             GUI.update_text(FOLD, CELL);
-            NOTE.end();
         };
-        NOTE.time("*** Computing constraints ***");
         window.setTimeout(F.compute_constraints, 0, FOLD, CELL);
     },
-    compute_constraints: (FOLD, CELL) => {
-        const { Vf, EF, FV } = FOLD;
-        const { SE, SC, CF, FC } = CELL;
-        NOTE.time("Computing edge-edge overlaps");
-        const ExE = X.SE_2_ExE(SE);
-        NOTE.count(ExE, "edge-edge adjacencies");
-        NOTE.lap();
-        NOTE.time("Computing edge-face overlaps");
-        const ExF = X.SE_CF_SC_2_ExF(SE, CF, SC);
-        NOTE.count(ExF, "edge-face adjacencies");
-        NOTE.lap();
-        NOTE.time("Computing variables");
-        const BF = X.CF_2_BF(CF);
-        NOTE.annotate(BF, "variables_faces");
-        NOTE.lap();
-        NOTE.time("Computing transitivity constraints");
-        const BT3 = X.FC_CF_BF_2_BT3(FC, CF, BF);
-        NOTE.count(BT3, "initial transitivity", 3);
-        NOTE.lap();
-        NOTE.time("Computing non-transitivity constraints");
-        const [BT0, BT1, BT2] = X.BF_EF_ExE_ExF_BT3_2_BT0_BT1_BT2(BF, EF, ExE, ExF, BT3);
-        NOTE.count(BT0, "taco-taco", 6);
-        NOTE.count(BT1, "taco-tortilla", 3);
-        NOTE.count(BT2, "tortilla-tortilla", 2);
-        NOTE.count(BT3, "independent transitivity", 3);
-        const BT = BF.map((F, i) => [BT0[i], BT1[i], BT2[i], BT3[i]]);
-        NOTE.lap();
-        NOTE.time("Updating cell-face listeners");
-        GUI.update_cell_face_listeners(FOLD, CELL, BF, BT);
-        NOTE.lap();
-        NOTE.time("*** Computing states ***");
-        window.setTimeout(F.compute_states, 0, FOLD, CELL, BF, BT);
-    },
-    compute_states: (FOLD, CELL, BF, BT) => {
-        const { EA, EF, Ff } = FOLD;
-        const { CF, FC } = CELL;
-        const BA0 = X.EF_EA_Ff_BF_2_BA0(EF, EA, Ff, BF);
+
+    get_state_limit: () => {
         const val = document.getElementById("limit_select").value;
-        const lim = (val == "all") ? Infinity : +val;
-        const sol = SOLVER.solve(BF, BT, BA0, lim);
-        if (sol.length == 3) { // solve found unsatisfiable constraint
-            const [type, F, E] = sol;
-            const str = `Unable to resolve ${CON.names[type]} on faces [${F}]`;
-            NOTE.log(`   - ${str}`);
-            NOTE.log(`   - Faces participating in conflict: [${E}]`);
-            GUI.update_error(F, E, BF, FC);
-            NOTE.time("Solve completed");
-            NOTE.count(0, "folded states");
-            const num_states = document.getElementById("num_states");
-            num_states.textContent = `(Found 0 states) ${str}`;
-            NOTE.lap();
-            stop = Date.now();
-            NOTE.end();
-            return;
-        } // solve completed
-        const [GB, GA] = sol;
+        return (val == "all") ? Infinity : +val;
+    },
+    compute_constraints: (FOLD, CELL) => {
+        const [BF, BT] = X.FOLD_CELL_2_CONSTRAINTS(FOLD, CELL)
+        GUI.update_cell_face_listeners(FOLD, CELL, BF, BT);
+        const [GB, GA] = X.FOLD_CELL_CONSTRAINT_2_GB_GA(
+            FOLD, CELL, BF, BT, F.get_state_limit());
+        F.compute_states(FOLD, CELL, BF, GB, GA)
+    },
+    compute_states: (FOLD, CELL, BF, GB, GA) => {
         const n = (GA == undefined) ? 0 : GA.reduce((s, A) => {
             return s * BigInt(A.length);
         }, BigInt(1));
         NOTE.time("Solve completed");
         NOTE.count(n, "folded states");
         NOTE.lap();
-        const num_states = document.getElementById("num_states");
-        num_states.textContent = `(Found ${n} state${(n == 1) ? "" : "s"})`;
-        if (n > 0) {
-            const GI = GB.map(() => 0);
-            NOTE.time("Computing state");
-            const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI);
-            FOLD.FO = X.edges_Ff_2_FO(edges, Ff);
-            CELL.CD = X.CF_edges_flip_2_CD(CF, edges);
-            document.getElementById("state_controls").style.display = "inline";
-            document.getElementById("flip").onchange = (e) => {
-                NOTE.start("Flipping model");
-                GUI.update_fold(FOLD, CELL);
-                NOTE.end();
-            };
-            const comp_select = SVG.clear("component_select");
-            for (const opt of ["none", "all"]) {
-                const el = document.createElement("option");
-                el.setAttribute("value", opt);
-                el.textContent = opt;
-                comp_select.appendChild(el);
-            }
-            for (const [i, _] of GB.entries()) {
-                const el = document.createElement("option");
-                el.setAttribute("value", `${i}`);
-                el.textContent = `${i}`;
-                comp_select.appendChild(el);
-            }
-            comp_select.onchange = (e) => {
-                NOTE.start("Changing component");
-                GUI.update_component(FOLD, CELL, BF, GB, GA, GI);
-                NOTE.end();
-            };
-            NOTE.time("Drawing fold");
-            GUI.update_fold(FOLD, CELL);
-            NOTE.time("Drawing component");
-            GUI.update_component(FOLD, CELL, BF, GB, GA, GI);
-        }
+        F.update_state_control(n, FOLD, CELL, BF, GB, GA)
         NOTE.lap();
         stop = Date.now();
         NOTE.end();
     },
+
+    update_state_control: (n, FOLD, CELL, BF, GB, GA) => {
+        const { Ff } = FOLD;
+        const { CF } = CELL;
+        const num_states = document.getElementById("num_states");
+        num_states.textContent = `(Found ${n} state${(n == 1) ? "" : "s"})`;
+        if (n == 0) {
+            return
+        }
+        const GI = GB.map(() => 0);
+        NOTE.time("Computing state");
+        const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI);
+        FOLD.FO = X.edges_Ff_2_FO(edges, Ff);
+        CELL.CD = X.CF_edges_flip_2_CD(CF, edges);
+        document.getElementById("state_controls").style.display = "inline";
+        document.getElementById("flip").onchange = (e) => {
+            NOTE.start("Flipping model");
+            GUI.update_fold(FOLD, CELL);
+            NOTE.end();
+        };
+        const comp_select = SVG.clear("component_select");
+        for (const opt of ["none", "all"]) {
+            const el = document.createElement("option");
+            el.setAttribute("value", opt);
+            el.textContent = opt;
+            comp_select.appendChild(el);
+        }
+        for (const [i, _] of GB.entries()) {
+            const el = document.createElement("option");
+            el.setAttribute("value", `${i}`);
+            el.textContent = `${i}`;
+            comp_select.appendChild(el);
+        }
+        comp_select.onchange = (e) => {
+            NOTE.start("Changing component");
+            GUI.update_component(FOLD, CELL, BF, GB, GA, GI);
+            NOTE.end();
+        };
+        GUI.update_fold(FOLD, CELL);
+        GUI.update_component(FOLD, CELL, BF, GB, GA, GI);
+    },
+
 }

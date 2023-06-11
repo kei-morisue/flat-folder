@@ -1,7 +1,8 @@
 import { M } from "./math.js";
 import { CON } from "./constraints.js";
 import { NOTE } from "./note.js";
-
+import { SOLVER } from "./solver.js";
+import { GUI } from "./gui.js";
 export const X = {     // CONVERSION
     L_2_V_EV_EL: (L, eps) => {
         for (const l of L) {    // sort line's points by X then Y
@@ -296,7 +297,7 @@ export const X = {     // CONVERSION
         }
         for (const [i, F] of EF.entries()) {
             const c = (F[0] == undefined) ? 1 :
-                     ((F[1] == undefined) ? 0 : undefined);
+                ((F[1] == undefined) ? 0 : undefined);
             if (c != undefined) {
                 EF[i] = [F[c]];
             }
@@ -560,7 +561,7 @@ export const X = {     // CONVERSION
                 const k = M.encode_order_pair(EF[i]);
                 const [f1, f2] = M.decode(k);
                 const o = ((!Ff[f1] && (a == "M")) ||
-                            (Ff[f1] && (a == "V"))) ? 2 : 1;
+                    (Ff[f1] && (a == "V"))) ? 2 : 1;
                 BA0[BI_map.get(k)] = o;
             }
         }
@@ -633,4 +634,108 @@ export const X = {     // CONVERSION
             return "B";
         });
     },
+    V_EV_EA_2_FOLD: (V, EV, EA) => {
+        [VV, FV] = X.V_EV_2_VV_FV(V, EV)
+        V = M.normalize_points(V);
+        const [EF, FE] = X.EV_FV_2_EF_FE(EV, FV);
+        const [VK, Vf, Ff, Vf_norm] = X.V_VV_EV_EA_2_f(V, VV, EV, EA, FV)
+        return { V, Vf, Vf_norm, VK, EV, EA, EF, FV, FE, Ff };
+    },
+
+
+
+    V_VV_EV_EA_2_f: (V, VV, EV, EA, FV) => {
+        const VK = X.V_VV_EV_EA_2_VK(V, VV, EV, EA);//Kawasaki properties
+        NOTE.annotate(V, "vertices_coords");
+        NOTE.annotate(EV, "edges_vertices");
+        NOTE.annotate(EA, "edges_assignments");
+        const [Vf, Ff] = X.V_FV_EV_EA_2_Vf_Ff(V, FV, EV, EA);
+        const Vf_norm = M.normalize_points(Vf);
+        NOTE.annotate(Vf, "vertices_coords_folded");
+        NOTE.annotate(Ff, "faces_flip");
+        NOTE.lap();
+        return [VK, Vf, Ff, Vf_norm]
+    },
+
+    FOLD_2_CELL: (FOLD) => {
+        NOTE.start("*** Computing cell graph ***");
+        const { Vf, EV, EF, FV } = FOLD;
+        const L = EV.map((P) => M.expand(P, Vf));
+        FOLD.eps = M.min_line_length(L) / M.EPS;
+        NOTE.time(`Using eps ${FOLD.eps} from min line length ${FOLD.eps * M.EPS} (factor ${M.EPS})`);
+        NOTE.time("Constructing points and segments from edges");
+        const [P, SP, SE] = X.L_2_V_EV_EL(L, FOLD.eps);
+        const P_norm = M.normalize_points(P);
+        NOTE.annotate(P, "points_coords");
+        NOTE.annotate(SP, "segments_points");
+        NOTE.annotate(SE, "segments_edges");
+        NOTE.lap();
+        NOTE.time("Constructing cells from segments");
+        const [, CP] = X.V_EV_2_VV_FV(P, SP);
+        NOTE.annotate(CP, "cells_points");
+        NOTE.lap();
+        NOTE.time("Computing segments_cells");
+        const [SC, CS] = X.EV_FV_2_EF_FE(SP, CP);
+        NOTE.annotate(SC, "segments_cells");
+        NOTE.annotate(CS, "cells_segments");
+        NOTE.lap();
+        NOTE.time("Making face-cell maps");
+        const [CF, FC] = X.EF_FV_SP_SE_CP_SC_2_CF_FC(EF, FV, SP, SE, CP, SC);
+        NOTE.count(CF, "face-cell adjacencies");
+        NOTE.lap();
+        return { P, P_norm, SP, SE, CP, CS, SC, CF, FC };
+    },
+
+    FOLD_CELL_2_CONSTRAINTS: (FOLD, CELL) => {
+        const { Vf, EF, FV } = FOLD;
+        const { SE, SC, CF, FC } = CELL;
+        NOTE.time("Computing edge-edge overlaps");
+        const ExE = X.SE_2_ExE(SE);
+        NOTE.count(ExE, "edge-edge adjacencies");
+        NOTE.lap();
+        NOTE.time("Computing edge-face overlaps");
+        const ExF = X.SE_CF_SC_2_ExF(SE, CF, SC);
+        NOTE.count(ExF, "edge-face adjacencies");
+        NOTE.lap();
+        NOTE.time("Computing variables");
+        const BF = X.CF_2_BF(CF);
+        NOTE.annotate(BF, "variables_faces");
+        NOTE.lap();
+        NOTE.time("Computing transitivity constraints");
+        const BT3 = X.FC_CF_BF_2_BT3(FC, CF, BF);
+        NOTE.count(BT3, "initial transitivity", 3);
+        NOTE.lap();
+        NOTE.time("Computing non-transitivity constraints");
+        const [BT0, BT1, BT2] = X.BF_EF_ExE_ExF_BT3_2_BT0_BT1_BT2(BF, EF, ExE, ExF, BT3);
+        NOTE.count(BT0, "taco-taco", 6);
+        NOTE.count(BT1, "taco-tortilla", 3);
+        NOTE.count(BT2, "tortilla-tortilla", 2);
+        NOTE.count(BT3, "independent transitivity", 3);
+        const BT = BF.map((F, i) => [BT0[i], BT1[i], BT2[i], BT3[i]]);
+        NOTE.lap();
+        return [BF, BT]
+    },
+
+    FOLD_CELL_CONSTRAINT_2_GB_GA: (FOLD, CELL, BF, BT, state_limit) => {
+        const { EA, EF, Ff } = FOLD;
+        const { FC } = CELL;
+        const BA0 = X.EF_EA_Ff_BF_2_BA0(EF, EA, Ff, BF);
+        const sol = SOLVER.solve(BF, BT, BA0, state_limit);
+        if (sol.length == 3) { // solve found unsatisfiable constraint
+            const [type, F, E] = sol;
+            const str = `Unable to resolve ${CON.names[type]} on faces [${F}]`;
+            NOTE.log(`   - ${str}`);
+            NOTE.log(`   - Faces participating in conflict: [${E}]`);
+            GUI.update_error(F, E, BF, FC);
+            NOTE.time("Solve completed");
+            NOTE.count(0, "folded states");
+            const num_states = document.getElementById("num_states");
+            num_states.textContent = `(Found 0 states) ${str}`;
+            NOTE.lap();
+            stop = Date.now();
+            NOTE.end();
+            return;
+        } // solve completed
+        return sol;
+    }
 };
