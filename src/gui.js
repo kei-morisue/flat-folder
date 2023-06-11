@@ -5,7 +5,12 @@ import { SVG } from "./svg.js";
 
 export const GUI = {   // INTERFACE
     BOUNDARY: 50,
-    WIDTH: 1,
+    WIDTH: {
+        BOLD: 3,
+        CREASE: 1,
+        DEFAULT: 1,
+
+    },
     COLORS: {
         background: "lightgray",
         active: "yellow",
@@ -14,7 +19,7 @@ export const GUI = {   // INTERFACE
         TF: ["lightgreen", "lightpink", "lightorange", "lightskyblue"],
         edge: {
             U: "black",
-            F: "lightgray",
+            F: "black",
             M: "blue",  // crease pattern is
             V: "red",   // rendered white-side up
             B: "black",
@@ -105,11 +110,11 @@ export const GUI = {   // INTERFACE
         const colors = EA.map(a => GUI.COLORS.edge[a]);
         SVG.draw_segments(svg, lines, {
             id: "flat_e_flat", stroke: colors,
-            stroke_width: GUI.WIDTH, filter: (i) => (EA[i] == "F")
+            stroke_width: GUI.WIDTH.BOLD, filter: (i) => (EA[i] != "F")
         });
         SVG.draw_segments(svg, lines, {
             id: "flat_e_folded", stroke: colors,
-            stroke_width: GUI.WIDTH, filter: (i) => (EA[i] != "F")
+            stroke_width: GUI.WIDTH.CREASE, filter: (i) => (EA[i] == "F")
         });
         SVG.append("g", svg, { id: "flat_text" });
         SVG.append("g", svg, { id: "flat_notes" });
@@ -128,7 +133,7 @@ export const GUI = {   // INTERFACE
             const Ccolors = GUI.CF_2_Cbw(CF);
             SVG.draw_polygons(svg, cells, { fill: Ccolors, id: "cell_c" });
             SVG.draw_segments(svg, lines, {
-                id: "cell_s", stroke: "black", stroke_width: GUI.WIDTH
+                id: "cell_s", stroke: "black", stroke_width: GUI.WIDTH.DEFAULT
             });
         }
         SVG.append("g", svg, { id: "cell_text" });
@@ -178,10 +183,12 @@ export const GUI = {   // INTERFACE
         const lines = SP.map((ps) => M.expand(ps, Q));
         SVG.draw_segments(svg, lines, {
             id: "fold_s_crease", stroke: GUI.COLORS.edge.F,
+            stroke_width: GUI.WIDTH.CREASE,
             filter: (i) => SD[i] == "C"
         });
         SVG.draw_segments(svg, lines, {
             id: "fold_s_edge", stroke: GUI.COLORS.edge.B,
+            stroke_width: GUI.WIDTH.BOLD,
             filter: (i) => SD[i] == "B"
         });
     },

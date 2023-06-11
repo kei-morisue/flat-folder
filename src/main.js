@@ -13,7 +13,9 @@ const MAIN = {
         NOTE.clear_log();
         NOTE.start("*** Starting Flat-Folder ***");
         NOTE.time("Initializing interface");
-        GUI.initiate_canvas(document.getElementById("main"), ["flat", "cell", "fold"])
+        GUI.initiate_canvas(
+            document.getElementById("main"),
+            ["flat", "cell", "fold"])
         CTRL.initialize()
 
         MAIN.sandbox()

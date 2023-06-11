@@ -92,6 +92,8 @@ export const SVG = {   // DRAWING
         }
         return g;
     },
+
+
     draw_polygons: (svg, P, options) => {
         const g = SVG.append("g", svg);
         if (options.id != undefined) { g.setAttribute("id", options.id); }
