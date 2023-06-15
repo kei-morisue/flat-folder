@@ -7,14 +7,9 @@ window.onload = () => { MAIN.startup(); };  // entry point
 
 const MAIN = {
     startup: () => {
-        GUI.initiate_canvas(
-            document.getElementById("main"),
-            ["flat", "cell", "fold"])
         CTRL.initialize()
         CON.build();
         NOTE.end();
     },
-
-
 
 };

@@ -40,11 +40,20 @@ export const D = {
     },
     distort: (V, Vf, X, A0) => {
         const vd = [];
+        const Vd_cp = D.dv(V, A0)
         for (const [i, vf] of Vf.entries()) {
-            const vcp = D.apply(A0, V[i])
-            vd[i] = D.apply(X, M.add(M.sub(vcp, V[i]), vf));
+            vd[i] = D.apply(X, M.add(Vd_cp[i], vf));
         }
         return M.normalize_points(vd);
+    },
+
+    dv: (V, A0) => {
+        const d_cp = D.distort_cp(V, A0)
+        return V.map((v, i) => M.sub(d_cp[i], v))
+    },
+
+    distort_cp: (V, A0) => {
+        return V.map(v => D.apply(A0, v))
     },
 
     make_dist: (FOLD, X, A0) => {
@@ -87,7 +96,6 @@ export const D = {
 
             }
         }
-        console.log(vz)
         vz = vz.map((v) => { return v[1] / v[0] })
         const zmax = Math.max(...vz)
 

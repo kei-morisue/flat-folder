@@ -21,26 +21,26 @@ export const F = {
         if (FOLD == undefined) { return; }
         SVG.clear("export");
         SVG.clear_element($flat)
-        GUI.update_flat($flat, FOLD);
-        GUI.update_cell($cell, FOLD);
+        GUI.update_flat([$flat, $cell], FOLD);
+        GUI.update_cell([$flat, $cell], FOLD);
         SVG.clear("fold");
         F.activate_controls(FOLD)
         document.getElementById("text").onchange = () => {
-            GUI.update_text(FOLD);
+            GUI.update_text([$flat, $cell], FOLD);
         };
         document.getElementById("fold_button").onclick = () => {
             const CELL = X.FOLD_2_CELL(FOLD)
-            F.compute_cells($cell, FOLD, CELL);
+            F.compute_cells($flat, $cell, FOLD, CELL);
         };
     },
 
 
 
-    compute_cells: ($cell, FOLD, CELL) => {
+    compute_cells: ($flat, $cell, FOLD, CELL) => {
         SVG.clear("export");
-        GUI.update_cell($cell, FOLD, CELL);
+        GUI.update_cell([$flat, $cell], FOLD, CELL);
         document.getElementById("text").onchange = (e) => {
-            GUI.update_text(FOLD, CELL);
+            GUI.update_text([$flat, $cell], FOLD, CELL);
         };
         window.setTimeout(F.compute_constraints, 0, FOLD, CELL);
     },
@@ -51,8 +51,8 @@ export const F = {
     },
     compute_constraints: (FOLD, CELL) => {
         const [BF, BT] = X.FOLD_CELL_2_CONSTRAINTS(FOLD, CELL)
-        GUI.update_cell_face_listeners(FOLD, CELL, BF, BT);
-        const [GB, GA] = X.FOLD_CELL_CONSTRAINT_2_GB_GA(
+        //GUI.update_cell_face_listeners(FOLD, CELL, BF, BT);
+        const [GB, GA] = X.FOLD_CELL_BF_BT_2_GB_GA(
             FOLD, CELL, BF, BT, F.get_state_limit());
         F.compute_states(FOLD, CELL, BF, GB, GA)
     },

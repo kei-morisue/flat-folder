@@ -661,7 +661,7 @@ export const X = {     // CONVERSION
         NOTE.start("*** Computing cell graph ***");
         const { Vf, EV, EF, FV } = FOLD;
         const L = EV.map((P) => M.expand(P, Vf));
-        FOLD.eps = M.min_line_length(L) / M.EPS;
+        FOLD.eps = M.min_line_length(L) / M.EPS / 100;
         NOTE.time(`Using eps ${FOLD.eps} from min line length ${FOLD.eps * M.EPS} (factor ${M.EPS})`);
         NOTE.time("Constructing points and segments from edges");
         const [P, SP, SE] = X.L_2_V_EV_EL(L, FOLD.eps);
@@ -716,7 +716,7 @@ export const X = {     // CONVERSION
         return [BF, BT]
     },
 
-    FOLD_CELL_CONSTRAINT_2_GB_GA: (FOLD, CELL, BF, BT, state_limit) => {
+    FOLD_CELL_BF_BT_2_GB_GA: (FOLD, CELL, BF, BT, state_limit) => {
         const { EA, EF, Ff } = FOLD;
         const { FC } = CELL;
         const BA0 = X.EF_EA_Ff_BF_2_BA0(EF, EA, Ff, BF);
