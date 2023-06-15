@@ -81,8 +81,6 @@ export const GUI = {   // INTERFACE
             });
             if (CELL != undefined) {
                 const { P_norm, SP, CP } = CELL;
-                console.log("CP", CP)
-                console.log("Pnorm", P_norm)
                 const cell_text = document.getElementById(pre_cell + "cell_text");
                 const cell_centers = CP.map(f => M.interior_point(M.expand(f, P_norm)));
                 const seg_centers = SP.map(l => M.centroid(M.expand(l, P_norm)));
@@ -126,24 +124,31 @@ export const GUI = {   // INTERFACE
         GUI.update_text([$flat, $cell], FOLD);
     },
     update_cell: ([$flat, $cell], FOLD, CELL) => {
+        const id_cell = $cell.getAttribute("id")
         SVG.clear_element($cell)
-        const pre = $cell.getAttribute("id")
         if (CELL == undefined) {
             const F = FOLD.FV.map(f => M.expand(f, FOLD.Vf_norm));
-            SVG.draw_polygons($cell, F, { id: "cell_f", opacity: 0.05 });
+            SVG.draw_polygons(
+                $cell,
+                F,
+                { id: id_cell + "cell_f", opacity: 0.05 });
         } else {
             const { P_norm, SP, SE, CP, SC, CF, FC } = CELL;
             const cells = CP.map(f => M.expand(f, P_norm));
             const lines = SP.map(l => M.expand(l, P_norm));
             const Ccolors = GUI.CF_2_Cbw(CF);
-            SVG.draw_polygons($cell, cells, { fill: Ccolors, id: "cell_c" });
-            SVG.draw_segments($cell, lines, {
-                id: "cell_s", stroke: "black", stroke_width: GUI.WIDTH.DEFAULT
-            });
+            SVG.draw_polygons(
+                $cell,
+                cells,
+                { fill: Ccolors, id: id_cell + "cell_c" });
+            SVG.draw_segments(
+                $cell,
+                lines,
+                { id: id_cell + "cell_s", stroke: "black", stroke_width: GUI.WIDTH.DEFAULT });
         }
-        SVG.append("g", $cell, { id: pre + "cell_text" });
-        SVG.append("g", $cell, { id: pre + "cell_notes" });
-        SVG.append("g", $cell, { id: "component_notes" });
+        SVG.append("g", $cell, { id: id_cell + "cell_text" });
+        SVG.append("g", $cell, { id: id_cell + "cell_notes" });
+        SVG.append("g", $cell, { id: id_cell + "component_notes" });
         GUI.update_text([$flat, $cell], FOLD, CELL);
     },
     CF_2_Ccolors: (CF) => {
@@ -166,11 +171,11 @@ export const GUI = {   // INTERFACE
         }
         return CF.map(F => F.length / max_layers);
     },
-    update_fold: (FOLD, CELL) => {
+    update_fold: ($fold, FOLD, CELL) => {
         SVG.clear("export");
+        SVG.clear_element($fold)
         const { EF, Ff } = FOLD;
         const { P_norm, SP, SE, CP, SC, CF, CD } = CELL;
-        const svg = SVG.clear("fold");
         const flip = document.getElementById("flip").checked;
         const tops = CD.map(S => flip ? S[0] : S[S.length - 1]);
         const SD = X.EF_SE_SC_CF_CD_2_SD(EF, SE, SC, CF, tops);
@@ -182,23 +187,24 @@ export const GUI = {   // INTERFACE
             if (Ff[d] != flip) { return GUI.COLORS.face.top; }
             else { return GUI.COLORS.face.bottom; }
         });
-        SVG.draw_polygons(svg, cells, {
+        SVG.draw_polygons($fold, cells, {
             id: "fold_c", fill: colors, stroke: colors
         });
         const lines = SP.map((ps) => M.expand(ps, Q));
-        SVG.draw_segments(svg, lines, {
+        SVG.draw_segments($fold, lines, {
             id: "fold_s_crease", stroke: GUI.COLORS.edge.F,
             stroke_width: GUI.WIDTH.CREASE,
             filter: (i) => SD[i] == "C"
         });
-        SVG.draw_segments(svg, lines, {
+        SVG.draw_segments($fold, lines, {
             id: "fold_s_edge", stroke: GUI.COLORS.edge.B,
             stroke_width: GUI.WIDTH.BOLD,
             filter: (i) => SD[i] == "B"
         });
     },
-    update_component: (FOLD, CELL, BF, GB, GA, GI) => {
+    update_component: ($cell, $fold, FOLD, CELL, BF, GB, GA, GI) => {
         SVG.clear("export");
+        const id_cell = $cell.getAttribute("id")
         const comp_select = document.getElementById("component_select");
         const c = comp_select.value;
         document.getElementById("state_config").style.display = "none";
@@ -230,12 +236,12 @@ export const GUI = {   // INTERFACE
                 const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI);
                 FOLD.FO = X.edges_Ff_2_FO(edges, FOLD.Ff);
                 CELL.CD = X.CF_edges_flip_2_CD(CELL.CF, edges);
-                GUI.update_fold(FOLD, CELL);
+                GUI.update_fold($fold, FOLD, CELL);
                 NOTE.end();
             };
         }
         const { Vf_norm, FV } = FOLD;
-        const g = SVG.clear("component_notes");
+        const g = SVG.clear(id_cell + "component_notes");
         for (const comp of C) {
             const lines = GB[comp].map(b => {
                 const [f1, f2] = M.decode(BF[b]);
@@ -245,12 +251,12 @@ export const GUI = {   // INTERFACE
             });
             const stroke = GUI.COLORS.rand[comp % GUI.COLORS.rand.length];
             SVG.draw_segments(g, lines, {
-                id: "cell_comp",
+                id: id_cell + "cell_comp",
                 "stroke": stroke, "stroke_width": 2
             });
         }
     },
-    update_cell_face_listeners: (FOLD, CELL, BF, BT) => {
+    update_cell_face_listeners: ($flat, $cell, FOLD, CELL, BF, BT) => {
         const { V, EV, FV, FE } = FOLD;
         const { P_norm, SP, CP, CS, CF, FC, SE } = CELL;
         const ES_map = new Map();
@@ -280,17 +286,19 @@ export const GUI = {   // INTERFACE
             FB[f1].push(f2);
             FB[f2].push(f1);
         }
+        const id_flat = $flat.getAttribute("id")
+        const id_cell = $cell.getAttribute("id")
         const active = [];
-        const flat_notes = document.getElementById("flat_notes");
-        const cell_notes = document.getElementById("cell_notes");
+        const flat_notes = document.getElementById(id_flat + "flat_notes");
+        const cell_notes = document.getElementById(id_cell + "cell_notes");
         NOTE.start_check("face", FC);
         for (const [i, C] of FC.entries()) {
             NOTE.check(i);
-            const face = document.getElementById(`flat_f${i}`);
+            const face = document.getElementById(id_flat + `flat_f${i}`);
             face.onclick = () => {
                 NOTE.time(`Clicked face ${i}`);
                 const color = face.getAttribute("fill");
-                GUI.clear_notes(CF, FC, true);
+                GUI.clear_notes($flat, $cell, CF, FC, true);
                 if (active.length == 1) {
                     if (color != GUI.COLORS.B) {
                         active.pop();
@@ -318,7 +326,7 @@ export const GUI = {   // INTERFACE
                         const Tj = (j == 1) ? T[j] : M.decode(T[j]);
                         for (const F of Tj) {
                             const f3 = (j == 1) ? F[2] : F;
-                            const el = document.getElementById(`flat_f${f3}`);
+                            const el = document.getElementById(id_flat + `flat_f${f3}`);
                             el.setAttribute("fill", GUI.COLORS.TF[j]);
                         }
                     }
@@ -344,19 +352,19 @@ export const GUI = {   // INTERFACE
                     }
                     for (const f of [f1, f2]) {
                         for (const c of FC[f]) {
-                            const el = document.getElementById(`cell_c${c}`);
+                            const el = document.getElementById(id_cell + `cell_c${c}`);
                             el.setAttribute("fill", GUI.COLORS.active);
                         }
                     }
                     const C1 = new Set(FC[f1]);
                     for (const c of FC[f2]) {
                         if (C1.has(c)) {
-                            const el = document.getElementById(`cell_c${c}`);
+                            const el = document.getElementById(id_cell + `cell_c${c}`);
                             el.setAttribute("fill", GUI.COLORS.TF[3]);
                         }
                     }
                     for (const f of active) {
-                        const el = document.getElementById(`flat_f${f}`);
+                        const el = document.getElementById(id_flat + `flat_f${f}`);
                         el.setAttribute("fill", GUI.COLORS.active);
                     }
                 } else {
@@ -372,7 +380,7 @@ export const GUI = {   // INTERFACE
                     NOTE.log(`   - overlaps cells [${FC[i]}]`);
                     NOTE.log("");
                     for (const f of FB[i]) {
-                        const el = document.getElementById(`flat_f${f}`);
+                        const el = document.getElementById(id_flat + `flat_f${f}`);
                         el.setAttribute("fill", GUI.COLORS.B);
                     }
                     const S = [];
@@ -395,16 +403,16 @@ export const GUI = {   // INTERFACE
                     SVG.draw_segments(cell_notes, S, {
                         id: "cell_f_bounds", stroke: Scolors, stroke_width: 5
                     });
-                    GUI.add_active(face, C, "cell_c");
+                    GUI.add_active(face, C, id_cell + "cell_c");
                 }
             };
         }
         for (const [i, F] of CF.entries()) {
-            const cell = document.getElementById(`cell_c${i}`);
+            const cell = document.getElementById(id_cell + `cell_c${i}`);
             cell.onclick = () => {
                 NOTE.time(`Clicked cell ${i}`);
                 const active = (cell.getAttribute("fill") == GUI.COLORS.active);
-                GUI.clear_notes(CF, FC, !active);
+                GUI.clear_notes($flat, $cell, CF, FC, !active);
                 if (active) {
                     NOTE.log("   - Clearing selection");
                     NOTE.log("");
@@ -414,7 +422,7 @@ export const GUI = {   // INTERFACE
                 NOTE.log(`   - bounded by segments [${CS[i]}]`);
                 NOTE.log(`   - overlaps faces [${CF[i]}]`);
                 NOTE.log("");
-                GUI.add_active(cell, F, "flat_f");
+                GUI.add_active(cell, F, id_flat + "flat_f");
                 const L = [];
                 const Lcolors = [];
                 const Scolors = [];
@@ -438,17 +446,19 @@ export const GUI = {   // INTERFACE
             };
         }
     },
-    clear_notes: (CF, FC, active) => {
-        SVG.clear("flat_notes");
-        SVG.clear("cell_notes");
+    clear_notes: ($flat, $cell, CF, FC, active) => {
+        const id_flat = $flat.getAttribute("id")
+        const id_cell = $cell.getAttribute("id")
+        SVG.clear(id_flat + "flat_notes");
+        SVG.clear(id_cell + "cell_notes");
         SVG.clear("export");
         for (const [i, C] of FC.entries()) {
-            const f = document.getElementById(`flat_f${i}`);
+            const f = document.getElementById(id_flat + `flat_f${i}`);
             f.setAttribute("fill", GUI.COLORS.face.bottom);
         }
         const Ccolors = active ? GUI.CF_2_Cbw(CF) : GUI.CF_2_Cbw(CF);
         for (const [i, F] of CF.entries()) {
-            const c = document.getElementById(`cell_c${i}`);
+            const c = document.getElementById(id_cell + `cell_c${i}`);
             c.setAttribute("fill", Ccolors[i]);
         }
     },
@@ -459,14 +469,16 @@ export const GUI = {   // INTERFACE
             el.setAttribute("fill", GUI.COLORS.active);
         }
     },
-    update_error: (F, E, BF, FC) => {
+    update_error: ($flat, $cell, F, E, BF, FC) => {
+        const id_flat = $flat.getAttribute("id")
+        const id_cell = $cell.getAttribute("id")
         for (const i of E) {
-            const f = document.getElementById(`flat_f${i}`);
+            const f = document.getElementById(id_flat + `flat_f${i}`);
             f.setAttribute("opacity", 0.2);
         }
         const CFnum = new Map();
         for (const i of F) {
-            const f = document.getElementById(`flat_f${i}`);
+            const f = document.getElementById(id_flat + `flat_f${i}`);
             f.setAttribute("fill", "red");
             for (const j of FC[i]) {
                 const val = CFnum.get(j);
@@ -474,7 +486,7 @@ export const GUI = {   // INTERFACE
             }
         }
         for (const [i, val] of CFnum) {
-            const c = document.getElementById(`cell_c${i}`);
+            const c = document.getElementById(id_cell + `cell_c${i}`);
             c.setAttribute("fill", GUI.COLORS.error[val]);
         }
     },

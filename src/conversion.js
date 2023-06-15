@@ -716,7 +716,7 @@ export const X = {     // CONVERSION
         return [BF, BT]
     },
 
-    FOLD_CELL_BF_BT_2_GB_GA: (FOLD, CELL, BF, BT, state_limit) => {
+    FOLD_CELL_BF_BT_2_GB_GA: ($flat, $cell, FOLD, CELL, BF, BT, state_limit) => {
         const { EA, EF, Ff } = FOLD;
         const { FC } = CELL;
         const BA0 = X.EF_EA_Ff_BF_2_BA0(EF, EA, Ff, BF);
@@ -726,7 +726,7 @@ export const X = {     // CONVERSION
             const str = `Unable to resolve ${CON.names[type]} on faces [${F}]`;
             NOTE.log(`   - ${str}`);
             NOTE.log(`   - Faces participating in conflict: [${E}]`);
-            GUI.update_error(F, E, BF, FC);
+            GUI.update_error($flat, $cell, F, E, BF, FC);
             NOTE.time("Solve completed");
             NOTE.count(0, "folded states");
             const num_states = document.getElementById("num_states");

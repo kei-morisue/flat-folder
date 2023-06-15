@@ -35,28 +35,17 @@ export const CTRL = {
             sel.appendChild(el);
         }
         sel.onchange = (e) => {
-            const [X_input, A0_input] = CTRL.get_parameters()
-            SB.sandbox(X_input, A0_input)
+            SB.sandbox()
         };
     },
 
-    get_parameters: () => {
-        const sliders = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById("slider" + i));
-        const vs = []
-        for (const i in [0, 1, 2, 3, 4, 5]) {
-            vs[i] = sliders[i].value * Math.PI
-        }
-        const X_input = D.X(vs[4], Math.cos(vs[5]), 1, 0)
-        const A0_input = D.A0(vs[0], vs[1], vs[2], vs[3])
-        return [X_input, A0_input]
-    },
+
     initialize_sliders: (f) => {
         const event_type = "input"
         const sliders = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById("slider" + i));
         for (const j in [0, 1, 2, 3, 4, 5]) {
             sliders[j].addEventListener(event_type, (e) => {
-                const [X_input, A0_input] = CTRL.get_parameters()
-                SB.sandbox(X_input, A0_input)
+                SB.sandbox()
             })
             const resetbutton = document.createElement("button")
             resetbutton.innerHTML = "reset"

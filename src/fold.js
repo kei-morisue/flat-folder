@@ -36,40 +36,47 @@ export const F = {
 
 
 
-    compute_cells: ($flat, $cell, FOLD, CELL) => {
+    compute_cells: ($flat, $cell, $fold, FOLD, CELL) => {
         SVG.clear("export");
         GUI.update_cell([$flat, $cell], FOLD, CELL);
         document.getElementById("text").onchange = (e) => {
             GUI.update_text([$flat, $cell], FOLD, CELL);
         };
-        window.setTimeout(F.compute_constraints, 0, FOLD, CELL);
+        window.setTimeout(F.compute_constraints, 0,
+            $flat, $cell, $fold, FOLD, CELL);
     },
 
     get_state_limit: () => {
         const val = document.getElementById("limit_select").value;
         return (val == "all") ? Infinity : +val;
     },
-    compute_constraints: (FOLD, CELL) => {
+    compute_constraints: ($flat, $cell, $fold, FOLD, CELL) => {
         const [BF, BT] = X.FOLD_CELL_2_CONSTRAINTS(FOLD, CELL)
-        //GUI.update_cell_face_listeners(FOLD, CELL, BF, BT);
-        const [GB, GA] = X.FOLD_CELL_BF_BT_2_GB_GA(
-            FOLD, CELL, BF, BT, F.get_state_limit());
-        F.compute_states(FOLD, CELL, BF, GB, GA)
+        GUI.update_cell_face_listeners($flat, $cell, FOLD, CELL, BF, BT);
+        const sol = X.FOLD_CELL_BF_BT_2_GB_GA(
+            $flat, $cell, FOLD, CELL, BF, BT, F.get_state_limit());
+        if (sol == undefined) {
+            return
+        }
+        const [GB, GA] = sol
+        console.log("GB", GB)
+        console.log("GA", GA)
+        F.compute_states($cell, $fold, FOLD, CELL, BF, GB, GA)
     },
-    compute_states: (FOLD, CELL, BF, GB, GA) => {
+    compute_states: ($cell, $fold, FOLD, CELL, BF, GB, GA) => {
         const n = (GA == undefined) ? 0 : GA.reduce((s, A) => {
             return s * BigInt(A.length);
         }, BigInt(1));
         NOTE.time("Solve completed");
         NOTE.count(n, "folded states");
         NOTE.lap();
-        F.update_state_control(n, FOLD, CELL, BF, GB, GA)
+        F.update_state_control(n, $cell, $fold, FOLD, CELL, BF, GB, GA)
         NOTE.lap();
         stop = Date.now();
         NOTE.end();
     },
 
-    update_state_control: (n, FOLD, CELL, BF, GB, GA) => {
+    update_state_control: (n, $cell, $fold, FOLD, CELL, BF, GB, GA) => {
         const { Ff } = FOLD;
         const { CF } = CELL;
         const num_states = document.getElementById("num_states");
@@ -85,7 +92,7 @@ export const F = {
         document.getElementById("state_controls").style.display = "inline";
         document.getElementById("flip").onchange = (e) => {
             NOTE.start("Flipping model");
-            GUI.update_fold(FOLD, CELL);
+            GUI.update_fold($fold, FOLD, CELL);
             NOTE.end();
         };
         const comp_select = SVG.clear("component_select");
@@ -103,11 +110,11 @@ export const F = {
         }
         comp_select.onchange = (e) => {
             NOTE.start("Changing component");
-            GUI.update_component(FOLD, CELL, BF, GB, GA, GI);
+            GUI.update_component($cell, $fold, FOLD, CELL, BF, GB, GA, GI);
             NOTE.end();
         };
-        GUI.update_fold(FOLD, CELL);
-        GUI.update_component(FOLD, CELL, BF, GB, GA, GI);
+        GUI.update_fold($fold, FOLD, CELL);
+        GUI.update_component($cell, $fold, FOLD, CELL, BF, GB, GA, GI);
     },
 
 }
