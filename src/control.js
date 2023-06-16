@@ -1,7 +1,6 @@
 import { NOTE } from "./note.js";
 import { IO } from "./io.js";
 import { F } from "./fold.js";
-import { D } from "./distortion.js";
 import { CP } from "./cp.js";
 import { GUI } from "./gui.js";
 import { SB } from "./sandbox.js"
@@ -43,19 +42,19 @@ export const CTRL = {
     initialize_sliders: (f) => {
         const event_type = "input"
         const sliders = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById("slider" + i));
-        for (const j in [0, 1, 2, 3, 4, 5]) {
-            sliders[j].addEventListener(event_type, (e) => {
+        sliders.map((slider) => {
+            slider.addEventListener(event_type, (e) => {
                 SB.sandbox()
             })
             const resetbutton = document.createElement("button")
             resetbutton.innerHTML = "reset"
-            const ini = sliders[j].value
+            const ini = slider.value
             resetbutton.onclick = (e) => {
-                sliders[j].value = ini
-                sliders[j].dispatchEvent(new Event(event_type))
+                slider.value = ini
+                slider.dispatchEvent(new Event(event_type))
             }
-            sliders[j].parentNode.prepend(resetbutton)
-        }
+            slider.parentNode.prepend(resetbutton)
+        })
     },
     initialize_limit: () => {
         const limit_select = document.getElementById("limit_select");

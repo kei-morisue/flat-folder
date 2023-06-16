@@ -13,16 +13,13 @@ import { M } from "./math.js";
 export const SB = {
     get_parameters: () => {
         const sliders = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById("slider" + i));
-        const vs = []
-        for (const i in [0, 1, 2, 3, 4, 5]) {
-            vs[i] = sliders[i].value * Math.PI
-        }
+        const vs = sliders.map((s) => s.value * Math.PI)
         const X_input = D.X(vs[4], Math.cos(vs[5]), 1, 0)
         const A0_input = D.A0(vs[0], vs[1], vs[2], vs[3])
-        return [X_input, A0_input]
+
+        return [X_input, A0_input,]
     },
     sandbox: () => {
-        const [Y, A0] = SB.get_parameters()
         const $flat = document.getElementById("flat")
         const $cell = document.getElementById("cell")
         const $fold = document.getElementById("fold")
@@ -35,7 +32,8 @@ export const SB = {
             document.getElementById("side").value)
         const CELL = X.FOLD_2_CELL(FOLD)
 
-
+        //distortion
+        const [Y, A0] = SB.get_parameters()
         const DIST = D.make_dist(FOLD, Y, A0)
         const CELLd = X.FOLD_2_CELL(DIST)
 
@@ -53,8 +51,8 @@ export const SB = {
         //GUI.update_cell([$flatn, $celln], FOLD, CELL)
 
 
-        F.compute_flat(DIST, $flatn, $cell)
-        F.compute_cells($flatn, $cell, $fold, DIST, CELLd)
+        F.compute_flat(DIST, $flat, $cell)
+        F.compute_cells($flat, $cell, $fold, DIST, CELLd)
 
     },
 }
