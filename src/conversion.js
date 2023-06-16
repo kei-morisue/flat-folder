@@ -661,7 +661,7 @@ export const X = {     // CONVERSION
         NOTE.start("*** Computing cell graph ***");
         const { Vf, EV, EF, FV } = FOLD;
         const L = EV.map((P) => M.expand(P, Vf));
-        FOLD.eps = M.min_line_length(L) / M.EPS / 100;
+        FOLD.eps = M.min_line_length(L) / M.EPS / 1000;
         NOTE.time(`Using eps ${FOLD.eps} from min line length ${FOLD.eps * M.EPS} (factor ${M.EPS})`);
         NOTE.time("Constructing points and segments from edges");
         const [P, SP, SE] = X.L_2_V_EV_EL(L, FOLD.eps);
@@ -686,7 +686,7 @@ export const X = {     // CONVERSION
         return { P, P_norm, SP, SE, CP, CS, SC, CF, FC };
     },
 
-    FOLD_CELL_2_CONSTRAINTS: (FOLD, CELL) => {
+    FOLD_CELL_2_BF_BT: (FOLD, CELL) => {
         const { Vf, EF, FV } = FOLD;
         const { SE, SC, CF, FC } = CELL;
         NOTE.time("Computing edge-edge overlaps");

@@ -1,6 +1,6 @@
 export const M = {     // MATH
     EPS: 300,
-    FLOAT_EPS: 10**(-16),
+    FLOAT_EPS: 10 ** (-16),
     near_zero: (a) => Math.abs(a) < M.FLOAT_EPS,
     encode: (A) => {
         const B = [];
@@ -18,26 +18,26 @@ export const M = {     // MATH
         return B;
     },
     expand: (F, V) => F.map((vi) => V[vi]),
-    mul: ([x, y], s) => [s*x, s*y],
-    div: (v, s) => M.mul(v, 1/s),
+    mul: ([x, y], s) => [s * x, s * y],
+    div: (v, s) => M.mul(v, 1 / s),
     add: ([x1, y1], [x2, y2]) => [x1 + x2, y1 + y2],
     sub: ([x1, y1], [x2, y2]) => [x1 - x2, y1 - y2],
-    dot: ([x1, y1], [x2, y2]) => x1*x2 + y1*y2,
+    dot: ([x1, y1], [x2, y2]) => x1 * x2 + y1 * y2,
     magsq: (v) => M.dot(v, v),
     mag: (v) => Math.sqrt(M.magsq(v)),
-    unit: (v) => M.mul(v, 1/M.mag(v)),
+    unit: (v) => M.mul(v, 1 / M.mag(v)),
     perp: ([x, y]) => [y, -x],
     refX: ([x, y]) => [-x, y],
     refY: ([x, y]) => [x, -y],
     distsq: (v1, v2) => M.magsq(M.sub(v2, v1)),
     dist: (v1, v2) => M.mag(M.sub(v2, v1)),
     close: (v1, v2, eps) => ((Math.abs(v1[0] - v2[0]) < eps) &&
-                             (Math.abs(v1[1] - v2[1]) < eps)),
+        (Math.abs(v1[1] - v2[1]) < eps)),
     area2: ([x1, y1], [x2, y2], [x3, y3]) =>
-        ((x2 - x1)*(y3 - y1) - (x3 - x1)*(y2 - y1)),
+        ((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1)),
     angle: ([x, y]) => {
         const ang = Math.atan2(y, x);
-        return ang + ((ang < 0) ? 2*Math.PI : 0);
+        return ang + ((ang < 0) ? 2 * Math.PI : 0);
     },
     centroid: (P) => {
         const n = P.length;
@@ -51,7 +51,7 @@ export const M = {     // MATH
         for (const [i, x] of A.entries()) {
             if (x == v) {
                 if (i == 0) { return A[A.length - 1]; }
-                else        { return A[i - 1]; }
+                else { return A[i - 1]; }
             }
         }
     },
@@ -63,7 +63,7 @@ export const M = {     // MATH
                 min_line_lengthsq = lensq;
             }
         }
-        return min_line_lengthsq**0.5;
+        return min_line_lengthsq ** 0.5;
     },
     sort_faces: (FV, V) => {
         FV.sort((f1, f2) => {
@@ -85,7 +85,7 @@ export const M = {     // MATH
         const y_diff = y_max - y_min;
         const is_tall = (x_diff < y_diff);
         const diff = is_tall ? y_diff : x_diff;
-        const off = M.sub([0.5, 0.5], M.div([x_diff, y_diff], 2*diff));
+        const off = M.sub([0.5, 0.5], M.div([x_diff, y_diff], 2 * diff));
         return P.map(p => M.add(M.div(M.sub(p, [x_min, y_min]), diff), off));
     },
     interior_point: (P) => {    // currently O(n^2), could be O(n log n)
@@ -101,14 +101,15 @@ export const M = {     // MATH
         for (const p3 of P) {
             const a = M.area2(p1, p2, p3);
             if (a <= 0) {           // reflex vertex cannot be an ear
+                [p1, p2] = [p2, p3];
                 continue;
             }
             let found = true;
             for (const p of P) {    // check if triangle contains another vertex
                 if ((p != p1) && (p != p2) && (p != p3) &&
                     ((M.area2(p1, p2, p) >= 0) &&
-                     (M.area2(p2, p3, p) >= 0) &&
-                     (M.area2(p3, p1, p) >= 0))
+                        (M.area2(p2, p3, p) >= 0) &&
+                        (M.area2(p3, p1, p) >= 0))
                 ) {
                     found = false;
                     break;
@@ -141,7 +142,7 @@ export const M = {     // MATH
         let area = 0;
         let p1 = P[P.length - 1];
         for (const p2 of P) {
-            area += (p1[0] + p2[0])*(p2[1] - p1[1]);
+            area += (p1[0] + p2[0]) * (p2[1] - p1[1]);
             p1 = p2;
         }
         return area;

@@ -51,7 +51,7 @@ export const F = {
         return (val == "all") ? Infinity : +val;
     },
     compute_constraints: ($flat, $cell, $fold, FOLD, CELL) => {
-        const [BF, BT] = X.FOLD_CELL_2_CONSTRAINTS(FOLD, CELL)
+        const [BF, BT] = X.FOLD_CELL_2_BF_BT(FOLD, CELL)
         GUI.update_cell_face_listeners($flat, $cell, FOLD, CELL, BF, BT);
         const sol = X.FOLD_CELL_BF_BT_2_GB_GA(
             $flat, $cell, FOLD, CELL, BF, BT, F.get_state_limit());
