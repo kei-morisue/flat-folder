@@ -39,9 +39,18 @@ export const D = {
         const { V, Vf, FV, Ff, Vf_norm } = FOLD
         //const vd = D.distort(V, Vf, A0)
         const vd = D.distort(V, Vf, A0)
-        FOLD.Vf = vd.map((v) => LIN.apply(X, v))
-        FOLD.Vf_norm = M.normalize_points(FOLD.Vf)
-        return FOLD
+        return {
+            V: FOLD.V,
+            Vf: vd.map((v) => LIN.apply(X, v)),
+            Vf_norm: M.normalize_points(FOLD.Vf),
+            VK: FOLD.VK,
+            EV: FOLD.EV,
+            EA: FOLD.EA,
+            EF: FOLD.EF,
+            FV: FOLD.FV,
+            FE: FOLD.FE,
+            Ff: FOLD.Ff
+        }
     },
 
 

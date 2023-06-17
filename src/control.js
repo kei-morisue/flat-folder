@@ -9,7 +9,6 @@ export const CTRL = {
     initialize: () => {
         CTRL.initialize_canvas()
         CTRL.initialize_cp_select()
-        CTRL.initialize_sliders()
         CTRL.initialize_import()
         CTRL.initialize_limit()
         CTRL.initialize_side()
@@ -22,7 +21,7 @@ export const CTRL = {
             ["flat", "cell", "fold"])
         GUI.initiate_canvas(
             document.getElementById("nondist"),
-            ["flatn", "celln", "foldn"])
+            ["flat_dist", "cell_dist", "fold_dist"])
     },
 
     initialize_cp_select: () => {
@@ -33,29 +32,14 @@ export const CTRL = {
             el.textContent = k;
             sel.appendChild(el);
         }
+        sel.value = "testcp_book_2"
         sel.onchange = (e) => {
             SB.sandbox()
         };
     },
 
 
-    initialize_sliders: (f) => {
-        const event_type = "input"
-        const sliders = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById("slider" + i));
-        sliders.map((slider) => {
-            slider.addEventListener(event_type, (e) => {
-                SB.sandbox()
-            })
-            const resetbutton = document.createElement("button")
-            resetbutton.innerHTML = "reset"
-            const ini = slider.value
-            resetbutton.onclick = (e) => {
-                slider.value = ini
-                slider.dispatchEvent(new Event(event_type))
-            }
-            slider.parentNode.prepend(resetbutton)
-        })
-    },
+
     initialize_limit: () => {
         const limit_select = document.getElementById("limit_select");
         for (const val of ["all", 1000, 100, 10, 1]) {

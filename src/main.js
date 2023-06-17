@@ -7,8 +7,8 @@ window.onload = () => { MAIN.startup(); };  // entry point
 
 const MAIN = {
     startup: () => {
-        CTRL.initialize()
         CON.build();
+        CTRL.initialize()
         NOTE.end();
     },
 

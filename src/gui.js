@@ -2,7 +2,7 @@ import { M } from "./math.js";
 import { NOTE } from "./note.js";
 import { X } from "./conversion.js";
 import { SVG } from "./svg.js";
-
+import { SB } from "./sandbox.js";
 export const GUI = {   // INTERFACE
     BOUNDARY: 50,
     WIDTH: {
@@ -173,10 +173,10 @@ export const GUI = {   // INTERFACE
     },
     update_fold: ($fold, FOLD, CELL) => {
         SVG.clear("export");
+        const flip = GUI.get_flip($fold)
         SVG.clear_element($fold)
         const { EF, Ff } = FOLD;
         const { P_norm, SP, SE, CP, SC, CF, CD } = CELL;
-        const flip = document.getElementById("flip").checked;
         const tops = CD.map(S => flip ? S[0] : S[S.length - 1]);
         const SD = X.EF_SE_SC_CF_CD_2_SD(EF, SE, SC, CF, tops);
         const m = [0.5, 0.5];
@@ -202,8 +202,16 @@ export const GUI = {   // INTERFACE
             filter: (i) => SD[i] == "B"
         });
     },
+
+    STORE_GI: undefined,
+
+    get_flip: ($fold) => {
+        const id = $fold.getAttribute("id")
+        return document.getElementById("flip" + id).checked
+    },
     update_component: ($cell, $fold, FOLD, CELL, BF, GB, GA, GI) => {
         SVG.clear("export");
+        GUI.STORE_GI = GI
         const id_cell = $cell.getAttribute("id")
         const comp_select = document.getElementById("component_select");
         const c = comp_select.value;
@@ -226,6 +234,7 @@ export const GUI = {   // INTERFACE
             state_select.setAttribute("min", 1);
             state_select.setAttribute("max", n);
             state_select.value = GI[c] + 1;
+            GUI.STORE_FOLD = FOLD
             state_select.onchange = (e) => {
                 NOTE.start("Computing new state");
                 let j = +e.target.value;
@@ -234,9 +243,11 @@ export const GUI = {   // INTERFACE
                 state_select.value = j;
                 GI[c] = j - 1;
                 const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI);
-                FOLD.FO = X.edges_Ff_2_FO(edges, FOLD.Ff);
+                FOLD.FO = X.edges_Ff_2_FO(edges, GUI.STORE_FOLD.Ff);
                 CELL.CD = X.CF_edges_flip_2_CD(CELL.CF, edges);
-                GUI.update_fold($fold, FOLD, CELL);
+                GUI.update_fold($fold, GUI.STORE_FOLD, CELL);
+                GUI.STORE_GI = GI
+                SB.GI_2_DIST(FOLD, GI, BF, GB, GA)
                 NOTE.end();
             };
         }

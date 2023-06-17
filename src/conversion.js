@@ -734,7 +734,7 @@ export const X = {     // CONVERSION
             NOTE.lap();
             stop = Date.now();
             NOTE.end();
-            return;
+            return sol;
         } // solve completed
         return sol;
     }

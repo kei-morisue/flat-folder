@@ -1,36 +1,22 @@
-import { M } from "./math.js";
 import { NOTE } from "./note.js";
-import { CON } from "./constraints.js";
 import { SVG } from "./svg.js";
-import { IO } from "./io.js";
 import { X } from "./conversion.js";
 import { GUI } from "./gui.js";
-
+import { SOLVER } from "./solver.js";
 
 
 export const F = {
-    activate_controls: (FOLD) => {
-        document.getElementById("fold_controls").style.display = "inline";
-        document.getElementById("num_states").innerHTML = "";
-        document.getElementById("state_controls").style.display = "none";
-        document.getElementById("state_config").style.display = "none";
-        document.getElementById("export_button").style.display = "inline";
-        document.getElementById("export_button").onclick = () => IO.write(FOLD);
-    },
-    compute_flat: (FOLD, $flat, $cell) => {
+
+
+    compute_flat: (FOLD, $flat, $cell, $fold) => {
         if (FOLD == undefined) { return; }
         SVG.clear("export");
         SVG.clear_element($flat)
         GUI.update_flat([$flat, $cell], FOLD);
         GUI.update_cell([$flat, $cell], FOLD);
-        SVG.clear("fold");
-        F.activate_controls(FOLD)
+        SVG.clear_element($fold);
         document.getElementById("text").onchange = () => {
             GUI.update_text([$flat, $cell], FOLD);
-        };
-        document.getElementById("fold_button").onclick = () => {
-            const CELL = X.FOLD_2_CELL(FOLD)
-            F.compute_cells($flat, $cell, FOLD, CELL);
         };
     },
 
@@ -42,8 +28,29 @@ export const F = {
         document.getElementById("text").onchange = (e) => {
             GUI.update_text([$flat, $cell], FOLD, CELL);
         };
-        window.setTimeout(F.compute_constraints, 0,
-            $flat, $cell, $fold, FOLD, CELL);
+        return F.compute_constraints($flat, $cell, $fold, FOLD, CELL);
+    },
+
+    compute_distorted_cells: ($flat, $cell, $fold, DIST, CELL, BA0) => {
+        SVG.clear("export");
+        GUI.update_cell([$flat, $cell], DIST, CELL);
+        const [BF, BT] = X.FOLD_CELL_2_BF_BT(DIST, CELL)
+        //GUI.update_cell_face_listeners($flat, $cell, DIST, CELL, BF, BT);
+
+        const sol = SOLVER.solve(BF, BT, BA0, 100124);
+        if (sol.length == 3) {
+            const [type, F, E] = sol;
+            //GUI.update_error($flat, $cell, F, E, BF, FC);
+            return { BF, BT, GB: undefined, GA: undefined };
+        }
+        const [GB, GA] = sol
+        const GI = GB.map(() => 0)
+        //F.compute_states($cell, $fold, DIST, CELL, BF, GB, GA, flip)
+        const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI);
+        DIST.FO = X.edges_Ff_2_FO(edges, DIST.Ff);
+        CELL.CD = X.CF_edges_flip_2_CD(CELL.CF, edges);
+        GUI.update_fold($fold, DIST, CELL);
+        return { BF, BT, GB, GA }
     },
 
     get_state_limit: () => {
@@ -59,26 +66,26 @@ export const F = {
             return
         }
         const [GB, GA] = sol
-        console.log("GB", GB)
-        console.log("GA", GA)
         F.compute_states($cell, $fold, FOLD, CELL, BF, GB, GA)
+        return { BF, BT, GB, GA }
     },
-    compute_states: ($cell, $fold, FOLD, CELL, BF, GB, GA) => {
+    compute_states: ($cell, $fold, FOLD, CELL, BF, GB, GA, flip) => {
+        F.update_state_control($cell, $fold, FOLD, CELL, BF, GB, GA)
+        NOTE.lap();
+        stop = Date.now();
+        NOTE.end();
+    },
+
+    update_state_control: ($cell, $fold, FOLD, CELL, BF, GB, GA) => {
+        const { Ff } = FOLD;
+        const { CF } = CELL;
         const n = (GA == undefined) ? 0 : GA.reduce((s, A) => {
             return s * BigInt(A.length);
         }, BigInt(1));
         NOTE.time("Solve completed");
         NOTE.count(n, "folded states");
         NOTE.lap();
-        F.update_state_control(n, $cell, $fold, FOLD, CELL, BF, GB, GA)
-        NOTE.lap();
-        stop = Date.now();
-        NOTE.end();
-    },
 
-    update_state_control: (n, $cell, $fold, FOLD, CELL, BF, GB, GA) => {
-        const { Ff } = FOLD;
-        const { CF } = CELL;
         const num_states = document.getElementById("num_states");
         num_states.textContent = `(Found ${n} state${(n == 1) ? "" : "s"})`;
         if (n == 0) {
@@ -89,12 +96,6 @@ export const F = {
         const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI);
         FOLD.FO = X.edges_Ff_2_FO(edges, Ff);
         CELL.CD = X.CF_edges_flip_2_CD(CF, edges);
-        document.getElementById("state_controls").style.display = "inline";
-        document.getElementById("flip").onchange = (e) => {
-            NOTE.start("Flipping model");
-            GUI.update_fold($fold, FOLD, CELL);
-            NOTE.end();
-        };
         const comp_select = SVG.clear("component_select");
         for (const opt of ["none", "all"]) {
             const el = document.createElement("option");

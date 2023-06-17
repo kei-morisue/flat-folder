@@ -10,7 +10,29 @@ import { X } from "./conversion.js";
 import { GUI } from "./gui.js";
 
 import { M } from "./math.js";
+
+import { CTRL } from "./control.js";
+
 export const SB = {
+    initialize_sliders: (FOLD, BF, GB, GA) => {
+        const event_type = "input"
+        const sliders = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById("slider" + i));
+        sliders.map((slider) => {
+            slider.addEventListener(event_type, (e) => {
+                const GI = GUI.STORE_GI
+                SB.GI_2_DIST(FOLD, GI, BF, GB, GA)
+            })
+            const resetbutton = document.createElement("button")
+            resetbutton.innerHTML = "reset"
+            const ini = slider.value
+            resetbutton.onclick = (e) => {
+                slider.value = ini
+                slider.dispatchEvent(new Event(event_type))
+            }
+            slider.parentNode.prepend(resetbutton)
+        })
+    },
+
     get_parameters: () => {
         const sliders = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById("slider" + i));
         const vs = sliders.map((s) => s.value * Math.PI)
@@ -23,36 +45,73 @@ export const SB = {
         const $flat = document.getElementById("flat")
         const $cell = document.getElementById("cell")
         const $fold = document.getElementById("fold")
-        const $flatn = document.getElementById("flatn")
-        const $celln = document.getElementById("celln")
-        const $foldn = document.getElementById("foldn")
+
+        // FOLD
         const FOLD = IO.doc_type_2_FOLD(
             CP[document.getElementById("cpselect").value],
             "cp",
             document.getElementById("side").value)
         const CELL = X.FOLD_2_CELL(FOLD)
+        SB.set_flip_check_box("flipfold", $fold, FOLD, CELL)
 
+
+        //constraint
+        F.compute_flat(FOLD, $flat, $cell, $fold)
+        const { BF, GB, GA } = F.compute_cells($flat, $cell, $fold, FOLD, CELL)
+
+        SB.initialize_sliders(FOLD, BF, GB, GA)
+
+        const GI = GUI.STORE_GI
         //distortion
+        SB.GI_2_DIST(FOLD, GI, BF, GB, GA)
+    },
+
+    GI_2_DIST: (FOLD, GI, BF, GB, GA) => {
+        const $foldn = document.getElementById("fold_dist")
+        // inferred face oders
+        const BA0 = SB.BF_GB_GA_GI_2_BA0(BF, GB, GA, GI)
+        const { FOLD_d, CELL_d } = SB.dist($foldn, FOLD, BA0)
+        SB.set_flip_check_box("flipfold_dist", $foldn, FOLD_d, CELL_d)
+    },
+    dist: ($fold, FOLD, BA0) => {
+        const $flat = document.getElementById("flat_dist")
+        const $cell = document.getElementById("cell_dist")
         const [Y, A0] = SB.get_parameters()
         const DIST = D.make_dist(FOLD, Y, A0)
+        F.compute_flat(DIST, $flat, $cell, $fold)
+
+
         const CELLd = X.FOLD_2_CELL(DIST)
+        const flip = GUI.get_flip($fold)
 
-        const d_cp = M.normalize_points(D.distort_cp(FOLD.V, A0))
-        const FOLD_VD = {
-            V: d_cp,
-            Vf_norm: d_cp,
-            VK: FOLD.VK,
-            VK: FOLD.EV,
-            EA: FOLD.EA,
-            EV: FOLD.EV,
-            FV: FOLD.FV,
+        const { BF, BT } = F.compute_distorted_cells(
+            $flat,
+            $cell,
+            $fold, DIST, CELLd, BA0)
+
+        return { FOLD_d: DIST, CELL_d: CELLd }
+    },
+
+    set_flip_check_box: (id, $fold, FOLD, CELL) => {
+        document.getElementById(id).onchange = (e) => {
+            const flip = GUI.get_flip($fold)
+            GUI.update_fold($fold, FOLD, CELL, flip);
+        };
+    },
+
+    BF_GB_GA_GI_2_BA0: (BF, GB, GA, GI) => {
+        NOTE.start_check("group", GB);
+        const BI_map = new Map();
+        for (const [i, k] of BF.entries()) {
+            BI_map.set(k, i);
         }
-        //GUI.update_flat([$flatn, $celln], FOLD_VD)
-        //GUI.update_cell([$flatn, $celln], FOLD, CELL)
-
-
-        F.compute_flat(DIST, $flat, $cell)
-        F.compute_cells($flat, $cell, $fold, DIST, CELLd)
-
+        const BA0 = BF.map(() => 0);
+        for (const [i, B] of GB.entries()) {
+            const orders = M.bit_decode(GA[i][GI[i]], B.length);
+            for (const [j, variable_index] of B.entries()) {
+                BA0[variable_index] = orders[j]
+            }
+        }
+        return BA0;
     },
 }
