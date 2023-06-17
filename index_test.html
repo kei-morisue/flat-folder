@@ -17,21 +17,23 @@
 
         <select id="cpselect"></select>
         <input type="button" id="side" value="+" style="width: 25px;" />
-        <input type="file" id="import" />
-        <input type="button" id="export_button" value="Export" style="display:none">
-        <div id="export" style="display:inline"></div>
+        <div style="display: none;">
+            <input type="file" id="import" />
+            <input type="button" id="export_button" value="Export" style="display:none">
+            <div id="export" style="display:inline"></div>
+        </div>
     </div>
 
 
 
     <div id="fold_controls" style="display:inline">
-        <input type="button" id="fold_button" value="Fold">
+        <input type="button" id="fold_button" value="Fold" style="display: none;">
         <label for="limit_select">Limit</label>
         <select id="limit_select"></select>
         <label for="text">Text</label>
         <input type="checkbox" id="text" checked="checked">
         <span id="num_states"></span>
-        <div id="state_controls" style="display: inline;">
+        <div id="state_controls">
             <label for="flip">Flip</label>
             <input type="checkbox" id="flipfold">
             <label for="component_select">Component</label>
@@ -42,16 +44,6 @@
             <input id="state_select" type="number"></input>
         </div>
 
-        <div id="state_controls_dist">
-            <label for="flip_dist">Flip(distorted)</label>
-            <input type="checkbox" id="flipfold_dist">
-            <label for="component_select_dist">distorted Component</label>
-            <select id="component_select_dist"></select>
-        </div>
-        <div id="state_config_dist" style="display: inline;">
-            <label for="state_select_dist" id="state_label_dist"></label>
-            <input id="state_select_dist" type="number"></input>
-        </div>
     </div>
     <div id="main">
     </div>
@@ -78,7 +70,17 @@
         </div>
     </span>
 
-
+    <div id="state_controls_dist">
+        <label for="flip_dist">Flip(distorted)</label>
+        <input type="checkbox" id="flipfold_dist">
+        <label for="component_select_dist">distorted Component</label>
+        <select id="component_select_dist"></select>
+    </div>
+    <div id="state_config_dist" style="display: none;">
+        <label for="state_select_dist" id="state_label_dist" style="display: inline;"></label>
+        <p>states</p>
+        <input id="state_select_dist" type="number" style="display: inline;"></input>
+    </div>
     <div id="nondist">
     </div>
 

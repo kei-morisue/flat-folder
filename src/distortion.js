@@ -9,10 +9,12 @@ export const D = {
     },
     A0: (theta, phi_sx, phi_sy, phi) => {
         const lev = 0.1
+        const sx = 1 + lev * Math.sin(2 * phi_sx - Math.PI)
+        const sy = sx * (1 + lev * Math.sin(2 * phi_sy - Math.PI))
         return D.X(
             theta * lev,
-            1 + lev * Math.sin(2 * phi_sx - Math.PI),
-            1 + lev * Math.sin(2 * phi_sy - Math.PI),
+            sx,
+            sy,
             phi
         )
     },
