@@ -18,10 +18,7 @@ export const CTRL = {
     initialize_canvas: () => {
         GUI.initiate_canvas(
             document.getElementById("main"),
-            ["flat", "cell", "fold"])
-        GUI.initiate_canvas(
-            document.getElementById("nondist"),
-            ["flat_dist", "cell_dist", "fold_dist"])
+            ["flat_dist", "cell_dist", "fold_dist", "fold"])
     },
 
     initialize_cp_select: () => {
@@ -32,7 +29,7 @@ export const CTRL = {
             el.textContent = k;
             sel.appendChild(el);
         }
-        sel.value = "testcp_book_2"
+        sel.value = "testcp_pleat"
         sel.onchange = (e) => {
             SB.sandbox()
         };

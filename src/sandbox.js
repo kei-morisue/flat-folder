@@ -47,17 +47,17 @@ export const SB = {
         }
     },
 
-    get_parameters: () => {
+    get_parameters: (range = 0.1) => {
         const sliders = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById("slider" + i + "instance"));
         const vs = sliders.map((s) => s.value * Math.PI)
         const X_input = D.X(vs[4], Math.cos(vs[5]), 1, 0)
-        const A0_input = D.A0(vs[0], vs[1], vs[2], vs[3])
+        const A0_input = D.A0(vs[0], vs[1], vs[2], vs[3], range)
 
         return [X_input, A0_input,]
     },
     sandbox: () => {
-        const $flat = document.getElementById("flat")
-        const $cell = document.getElementById("cell")
+        //const $flat = document.getElementById("flat")
+        //const $cell = document.getElementById("cell")
         const $fold = document.getElementById("fold")
 
         // FOLD
@@ -70,9 +70,9 @@ export const SB = {
 
 
         //constraint
-        F.compute_flat(FOLD, $flat, $cell, $fold)
-        const { BF, GB, GA } = F.compute_cells($flat, $cell, $fold, FOLD, CELL)
-
+        //F.compute_flat(FOLD, $flat, $cell, $fold)
+        const { BF, GB, GA } = F.compute_constraints($fold, FOLD, CELL)
+        F.update_state_control($fold, FOLD, CELL, BF, GB, GA)
         SB.initialize_sliders(FOLD, BF, GB, GA)
 
         const GI = GUI.STORE_GI
@@ -90,19 +90,16 @@ export const SB = {
     dist: ($fold, FOLD, BA0) => {
         const $flat = document.getElementById("flat_dist")
         const $cell = document.getElementById("cell_dist")
-        const [Y, A0] = SB.get_parameters()
+        const [Y, A0] = SB.get_parameters(M.min_line_length(X.FOLD_2_Lf(FOLD)) * 0.1)
         const DIST = D.make_dist(FOLD, Y, A0)
         F.compute_flat(DIST, $flat, $cell, $fold)
 
 
         const CELLd = X.FOLD_2_CELL(DIST)
-        const flip = GUI.get_flip($fold)
-
-        const { BF, BT } = F.compute_distorted_cells(
-            $flat,
-            $cell,
-            $fold, DIST, CELLd, BA0)
-
+        GUI.update_cell($cell, CELLd)
+        const { BF, BT, sol } = F.compute_constraints_distorted($fold, DIST, CELLd, BA0)
+        F.set_text($flat, $cell, FOLD, CELLd)
+        GUI.update_cell_face_listeners($flat, $cell, DIST, CELLd, BF, BT, sol);
         return { FOLD_d: DIST, CELL_d: CELLd }
     },
 

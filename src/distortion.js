@@ -7,12 +7,11 @@ export const D = {
         const s = LIN.shear(x, y, phi)
         return LIN.mmlt(LIN.rot(theta), s)
     },
-    A0: (theta, phi_sx, phi_sy, phi) => {
-        const lev = 0.1
-        const sx = 1 + lev * Math.sin(2 * phi_sx - Math.PI)
-        const sy = sx * (1 + lev * Math.sin(2 * phi_sy - Math.PI))
+    A0: (theta, phi_sx, phi_sy, phi, range) => {
+        const sx = 1 + range * Math.sin(2 * phi_sx - Math.PI)
+        const sy = sx * (1 + range * Math.sin(2 * phi_sy - Math.PI))
         return D.X(
-            theta * lev,
+            theta * range,
             sx,
             sy,
             phi

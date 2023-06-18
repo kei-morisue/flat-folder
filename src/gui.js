@@ -3,6 +3,7 @@ import { NOTE } from "./note.js";
 import { X } from "./conversion.js";
 import { SVG } from "./svg.js";
 import { SB } from "./sandbox.js";
+import { CON } from "./constraints.js";
 export const GUI = {   // INTERFACE
     BOUNDARY: 50,
     WIDTH: {
@@ -48,10 +49,10 @@ export const GUI = {   // INTERFACE
             ).setAttribute("id", id)
         }
     },
-    update_text: ([$fold, $cell], FOLD, CELL) => {
+    update_text: ([$flat, $cell], FOLD, CELL) => {
         SVG.clear("export");
 
-        const pre_flat = $fold.getAttribute("id")
+        const pre_flat = $flat.getAttribute("id")
         const pre_cell = $cell.getAttribute("id")
         SVG.clear(pre_flat + "flat_shrunk");
         SVG.clear(pre_flat + "flat_text");
@@ -96,7 +97,57 @@ export const GUI = {   // INTERFACE
             }
         }
     },
-    update_flat: ([$flat, $cell], FOLD) => {
+
+    update_text_cell: ($cell, CELL) => {
+        SVG.clear("export");
+        const pre_cell = $cell.getAttribute("id")
+        SVG.clear(pre_cell + "cell_text");
+        const visible = document.getElementById("text").checked;
+        if (visible) {
+            const { P_norm, SP, CP } = CELL;
+            const cell_text = document.getElementById(pre_cell + "cell_text");
+            const cell_centers = CP.map(f => M.interior_point(M.expand(f, P_norm)));
+            const seg_centers = SP.map(l => M.centroid(M.expand(l, P_norm)));
+            SVG.draw_points(cell_text, cell_centers, {
+                text: true, id: pre_cell + "c_text"
+            });
+            SVG.draw_points(cell_text, seg_centers, {
+                text: true, id: pre_cell + "s_text"
+            });
+            SVG.draw_points(cell_text, P_norm, {
+                text: true, id: pre_cell + "p_text", fill: "green"
+            });
+        }
+    },
+    update_text_flat: ($flat, FOLD) => {
+        SVG.clear("export");
+        const pre_flat = $flat.getAttribute("id")
+        SVG.clear(pre_flat + "flat_shrunk");
+        SVG.clear(pre_flat + "flat_text");
+        const visible = document.getElementById("text").checked;
+        if (visible) {
+            const flat_text = document.getElementById(pre_flat + "flat_text");
+            const flat_shrunk = document.getElementById(pre_flat + "flat_shrunk");
+            const { V, EV, EA, FV } = FOLD;
+            const F = FV.map(f => M.expand(f, V));
+            const shrunk = F.map(f => {
+                const c = M.centroid(f);
+                return f.map(p => M.add(M.mul(M.sub(p, c), 0.5), c));
+            });
+            SVG.draw_polygons(flat_shrunk, shrunk, {
+                text: true, id: pre_flat + "f_text", opacity: 0.2
+            });
+            const line_centers = EV.map(l => M.centroid(M.expand(l, V)));
+            const colors = EA.map(a => GUI.COLORS.edge[a]);
+            SVG.draw_points(flat_text, line_centers, {
+                text: true, id: pre_flat + "e_text", fill: colors
+            });
+            SVG.draw_points(flat_text, V, {
+                text: true, id: pre_flat + "v_text", fill: "green"
+            });
+        }
+    },
+    update_flat: ($flat, FOLD) => {
         SVG.clear_element($flat)
         const prefix = $flat.getAttribute("id")
         const { V, VK, EV, EA, FV } = FOLD;
@@ -121,35 +172,41 @@ export const GUI = {   // INTERFACE
         });
         SVG.append("g", $flat, { id: prefix + "flat_text" });
         SVG.append("g", $flat, { id: prefix + "flat_notes" });
-        GUI.update_text([$flat, $cell], FOLD);
+        GUI.update_text_flat($flat, FOLD);
     },
-    update_cell: ([$flat, $cell], FOLD, CELL) => {
+    update_cell_lazy: ($cell, FOLD) => {
         const id_cell = $cell.getAttribute("id")
         SVG.clear_element($cell)
-        if (CELL == undefined) {
-            const F = FOLD.FV.map(f => M.expand(f, FOLD.Vf_norm));
-            SVG.draw_polygons(
-                $cell,
-                F,
-                { id: id_cell + "cell_f", opacity: 0.05 });
-        } else {
-            const { P_norm, SP, SE, CP, SC, CF, FC } = CELL;
-            const cells = CP.map(f => M.expand(f, P_norm));
-            const lines = SP.map(l => M.expand(l, P_norm));
-            const Ccolors = GUI.CF_2_Cbw(CF);
-            SVG.draw_polygons(
-                $cell,
-                cells,
-                { fill: Ccolors, id: id_cell + "cell_c" });
-            SVG.draw_segments(
-                $cell,
-                lines,
-                { id: id_cell + "cell_s", stroke: "black", stroke_width: GUI.WIDTH.DEFAULT });
-        }
+        const F = FOLD.FV.map(f => M.expand(f, FOLD.Vf_norm));
+        SVG.draw_polygons(
+            $cell,
+            F,
+            { id: id_cell + "cell_f", opacity: 0.05 });
         SVG.append("g", $cell, { id: id_cell + "cell_text" });
         SVG.append("g", $cell, { id: id_cell + "cell_notes" });
         SVG.append("g", $cell, { id: id_cell + "component_notes" });
-        GUI.update_text([$flat, $cell], FOLD, CELL);
+    },
+    update_cell: ($cell, CELL) => {
+        const id_cell = $cell.getAttribute("id")
+        SVG.clear_element($cell)
+
+        const { P_norm, SP, SE, CP, SC, CF, FC } = CELL;
+        const cells = CP.map(f => M.expand(f, P_norm));
+        const lines = SP.map(l => M.expand(l, P_norm));
+        const Ccolors = GUI.CF_2_Cbw(CF);
+        SVG.draw_polygons(
+            $cell,
+            cells,
+            { fill: Ccolors, id: id_cell + "cell_c" });
+        SVG.draw_segments(
+            $cell,
+            lines,
+            { id: id_cell + "cell_s", stroke: "black", stroke_width: GUI.WIDTH.DEFAULT });
+
+        SVG.append("g", $cell, { id: id_cell + "cell_text" });
+        SVG.append("g", $cell, { id: id_cell + "cell_notes" });
+        SVG.append("g", $cell, { id: id_cell + "component_notes" });
+        GUI.update_text_cell($cell, CELL);
     },
     CF_2_Ccolors: (CF) => {
         return GUI.CF_2_Clayer(CF).map(l => `hsl(${Math.ceil((2 + l) * 120)}, 100%, 50%)`);
@@ -209,10 +266,10 @@ export const GUI = {   // INTERFACE
         const id = $fold.getAttribute("id")
         return document.getElementById("flip" + id).checked
     },
-    update_component: ($cell, $fold, FOLD, CELL, BF, GB, GA, GI) => {
+    update_component: ($fold, FOLD, CELL, BF, GB, GA, GI, $cell = undefined) => {
         SVG.clear("export");
         GUI.STORE_GI = GI
-        const id_cell = $cell.getAttribute("id")
+
         const comp_select = document.getElementById("component_select");
         const c = comp_select.value;
         document.getElementById("state_config").style.display = "none";
@@ -251,8 +308,15 @@ export const GUI = {   // INTERFACE
                 NOTE.end();
             };
         }
-        const { Vf_norm, FV } = FOLD;
+        if ($cell != undefined) {
+            GUI.update_cell_component_notes($cell, BF, GB, C)
+        }
+    },
+
+    update_cell_component_notes: ($cell, BF, GB, C) => {
+        const id_cell = $cell.getAttribute("id")
         const g = SVG.clear(id_cell + "component_notes");
+        const { Vf_norm, FV } = FOLD;
         for (const comp of C) {
             const lines = GB[comp].map(b => {
                 const [f1, f2] = M.decode(BF[b]);
@@ -267,7 +331,8 @@ export const GUI = {   // INTERFACE
             });
         }
     },
-    update_cell_face_listeners: ($flat, $cell, FOLD, CELL, BF, BT) => {
+
+    update_cell_face_listeners: ($flat, $cell, FOLD, CELL, BF, BT, sol) => {
         const { V, EV, FV, FE } = FOLD;
         const { P_norm, SP, CP, CS, CF, FC, SE } = CELL;
         const ES_map = new Map();
@@ -455,6 +520,21 @@ export const GUI = {   // INTERFACE
                     id: "cell_c_bounds", stroke: Scolors, stroke_width: 5
                 });
             };
+        }
+        if (sol.length == 3) { // solve found unsatisfiable constraint
+            const [type, F, E] = sol;
+            const str = `Unable to resolve ${CON.names[type]} on faces [${F}]`;
+            NOTE.log(`   - ${str}`);
+            NOTE.log(`   - Faces participating in conflict: [${E}]`);
+            GUI.update_error($flat, $cell, F, E, BF, FC);
+            NOTE.time("Solve completed");
+            NOTE.count(0, "folded states");
+            const num_states = document.getElementById("num_states");
+            num_states.textContent = `(Found 0 states) ${str}`;
+            NOTE.lap();
+            stop = Date.now();
+            NOTE.end();
+            return sol;
         }
     },
     clear_notes: ($flat, $cell, CF, FC, active) => {

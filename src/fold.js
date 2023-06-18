@@ -12,36 +12,30 @@ export const F = {
         if (FOLD == undefined) { return; }
         SVG.clear("export");
         SVG.clear_element($flat)
-        GUI.update_flat([$flat, $cell], FOLD);
-        GUI.update_cell([$flat, $cell], FOLD);
+        GUI.update_flat($flat, FOLD);
         SVG.clear_element($fold);
         document.getElementById("text").onchange = () => {
-            GUI.update_text([$flat, $cell], FOLD);
+            GUI.update_text_flat($flat, FOLD);
         };
     },
 
-
-
-    compute_cells: ($flat, $cell, $fold, FOLD, CELL) => {
-        SVG.clear("export");
-        GUI.update_cell([$flat, $cell], FOLD, CELL);
+    set_text: ($flat, $cell, FOLD, CELL) => {
         document.getElementById("text").onchange = (e) => {
-            GUI.update_text([$flat, $cell], FOLD, CELL);
+            GUI.update_text_flat($flat, FOLD)
+            GUI.update_text_cell($cell, CELL)
         };
-        return F.compute_constraints($flat, $cell, $fold, FOLD, CELL);
     },
 
-    compute_distorted_cells: ($flat, $cell, $fold, DIST, CELL, BA0) => {
-        SVG.clear("export");
-        GUI.update_cell([$flat, $cell], DIST, CELL);
+    compute_constraints_distorted: ($fold, DIST, CELL, BA0) => {
         const [BF, BT] = X.FOLD_CELL_2_BF_BT(DIST, CELL)
         //GUI.update_cell_face_listeners($flat, $cell, DIST, CELL, BF, BT);
 
-        const sol = SOLVER.solve(BF, BT, BA0, 100124);
+        //const sol = SOLVER.solve(BF, BT, BA0, 100124);
+        const sol = X.FOLD_BF_BT_2_sol(DIST, BF, BT, F.get_state_limit());
         if (sol.length == 3) {
             const [type, F, E] = sol;
             //GUI.update_error($flat, $cell, F, E, BF, FC);
-            return { BF, BT, GB: undefined, GA: undefined };
+            return { BF, BT, sol };
         }
         const [GB, GA] = sol
         const GI = GB.map(() => 0)
@@ -50,33 +44,25 @@ export const F = {
         DIST.FO = X.edges_Ff_2_FO(edges, DIST.Ff);
         CELL.CD = X.CF_edges_flip_2_CD(CELL.CF, edges);
         GUI.update_fold($fold, DIST, CELL);
-        return { BF, BT, GB, GA }
+        return { BF, BT, sol }
     },
 
     get_state_limit: () => {
         const val = document.getElementById("limit_select").value;
         return (val == "all") ? Infinity : +val;
     },
-    compute_constraints: ($flat, $cell, $fold, FOLD, CELL) => {
+    compute_constraints: ($fold, FOLD, CELL) => {
         const [BF, BT] = X.FOLD_CELL_2_BF_BT(FOLD, CELL)
-        GUI.update_cell_face_listeners($flat, $cell, FOLD, CELL, BF, BT);
-        const sol = X.FOLD_CELL_BF_BT_2_GB_GA(
-            $flat, $cell, FOLD, CELL, BF, BT, F.get_state_limit());
+        //GUI.update_cell_face_listeners($flat, $cell, FOLD, CELL, BF, BT);
+        const sol = X.FOLD_BF_BT_2_sol(FOLD, BF, BT, F.get_state_limit());
         if (sol == undefined) {
             return
         }
         const [GB, GA] = sol
-        F.compute_states($cell, $fold, FOLD, CELL, BF, GB, GA)
         return { BF, BT, GB, GA }
     },
-    compute_states: ($cell, $fold, FOLD, CELL, BF, GB, GA, flip) => {
-        F.update_state_control($cell, $fold, FOLD, CELL, BF, GB, GA)
-        NOTE.lap();
-        stop = Date.now();
-        NOTE.end();
-    },
 
-    update_state_control: ($cell, $fold, FOLD, CELL, BF, GB, GA) => {
+    update_state_control: ($fold, FOLD, CELL, BF, GB, GA, $cell) => {
         const { Ff } = FOLD;
         const { CF } = CELL;
         const n = (GA == undefined) ? 0 : GA.reduce((s, A) => {
@@ -111,11 +97,11 @@ export const F = {
         }
         comp_select.onchange = (e) => {
             NOTE.start("Changing component");
-            GUI.update_component($cell, $fold, FOLD, CELL, BF, GB, GA, GI);
+            const C = GUI.update_component($fold, FOLD, CELL, BF, GB, GA, GI, $cell);
             NOTE.end();
         };
         GUI.update_fold($fold, FOLD, CELL);
-        GUI.update_component($cell, $fold, FOLD, CELL, BF, GB, GA, GI);
+        GUI.update_component($fold, FOLD, CELL, BF, GB, GA, GI, $cell);
     },
 
 }
