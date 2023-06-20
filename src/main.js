@@ -1,6 +1,5 @@
-import { NOTE } from "./note.js";
-import { CON } from "./constraints.js";
-import { GUI } from "./gui.js";
+import { NOTE } from "./flat_folder/note.js";
+import { CON } from "./flat_folder/constraints.js";
 import { CTRL } from "./control.js";
 
 window.onload = () => { MAIN.startup(); };  // entry point

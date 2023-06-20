@@ -1,4 +1,4 @@
-import { M } from "./math.js";
+import { M } from "./flat_folder/math.js";
 
 
 export const LIN = {

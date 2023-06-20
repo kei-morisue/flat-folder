@@ -1,4 +1,4 @@
-import { M } from "./math.js";
+import { M } from "./flat_folder/math.js";
 
 import { LIN } from "./linear.js";
 
@@ -11,7 +11,7 @@ export const D = {
         const sx = 1 + range * Math.sin(2 * phi_sx - Math.PI)
         const sy = sx * (1 + range * Math.sin(2 * phi_sy - Math.PI))
         return D.X(
-            theta * range,
+            (2 * theta - Math.PI) * range,
             sx,
             sy,
             phi

@@ -2,8 +2,10 @@ import { M } from "./math.js";
 import { NOTE } from "./note.js";
 import { X } from "./conversion.js";
 import { SVG } from "./svg.js";
-import { SB } from "./sandbox.js";
+import { SB } from "../sandbox.js";
 import { CON } from "./constraints.js";
+
+import { LIN } from "../linear.js";
 export const GUI = {   // INTERFACE
     BOUNDARY: 50,
     WIDTH: {
@@ -35,15 +37,15 @@ export const GUI = {   // INTERFACE
         error: ["yellow", "lightskyblue", "lightpink", "lightgreen"],
     },
 
-    initiate_canvas: ($main, ids, is_vertical = false) => {
+    initiate_canvas: (parent, ids, is_vertical = false) => {
         const [boundary, scale] = [GUI.BOUNDARY, SVG.SCALE];
-        const page = SVG.draw_viewbox(
-            $main,
+        const base = SVG.draw_viewbox(
+            parent,
             is_vertical ? [0, 0, scale, ids.length * scale] : [0, 0, ids.length * scale, scale],
             GUI.COLORS.background)
         for (const [i, id] of ids.entries()) {
             SVG.draw_canvas(
-                page,
+                base,
                 is_vertical ? [0, i * scale, scale, scale] : [i * scale, 0, scale, scale],
                 [-boundary, -boundary, scale + 2 * boundary, scale + 2 * boundary]
             ).setAttribute("id", id)
@@ -264,7 +266,9 @@ export const GUI = {   // INTERFACE
 
     get_flip: ($fold) => {
         const id = $fold.getAttribute("id")
-        return document.getElementById("flip" + id).checked
+        const [Y] = SB.get_parameters(0)
+        const is_transform_flip = LIN.det(Y) < 0
+        return document.getElementById("flip" + id).checked ^ is_transform_flip
     },
     update_component: ($fold, FOLD, CELL, BF, GB, GA, GI, $cell = undefined) => {
         SVG.clear("export");
@@ -291,7 +295,6 @@ export const GUI = {   // INTERFACE
             state_select.setAttribute("min", 1);
             state_select.setAttribute("max", n);
             state_select.value = GI[c] + 1;
-            GUI.STORE_FOLD = FOLD
             state_select.onchange = (e) => {
                 NOTE.start("Computing new state");
                 let j = +e.target.value;
@@ -302,7 +305,7 @@ export const GUI = {   // INTERFACE
                 const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI);
                 FOLD.FO = X.edges_Ff_2_FO(edges, GUI.STORE_FOLD.Ff);
                 CELL.CD = X.CF_edges_flip_2_CD(CELL.CF, edges);
-                GUI.update_fold($fold, GUI.STORE_FOLD, CELL);
+                GUI.update_fold($fold, FOLD, CELL);
                 GUI.STORE_GI = GI
                 SB.GI_2_DIST(FOLD, GI, BF, GB, GA)
                 NOTE.end();

@@ -1,8 +1,8 @@
-import { NOTE } from "./note.js";
-import { IO } from "./io.js";
+import { NOTE } from "./flat_folder/note.js";
+import { IO } from "./flat_folder/io.js";
 import { F } from "./fold.js";
 import { CP } from "./cp.js";
-import { GUI } from "./gui.js";
+import { GUI } from "./flat_folder/gui.js";
 import { SB } from "./sandbox.js"
 
 export const CTRL = {

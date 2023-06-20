@@ -1,30 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Flat-Folder</title>
-    <link rel="icon" href="./favicon.png">
+    <title>Flat-Folder MOD</title>
+    <link rel="icon" href="./icon-512x512.png">
 </head>
+
 <body style="background:darkgray">
+
+
     <div>
         <span style="font-family:sans-serif">
-            <b>Flat-Folder&nbsp;&nbsp;</b>
+            <b>Flat-Folder MOD&nbsp;&nbsp;</b>
         </span>
-        <input type="button" id="side" value="+" style="width: 25px;"/>
-        <input type="file" id="import"/>
-        <input type="button" id="export_button" value="Export" style="display:none">
-        <div id="export" style="display:inline"></div>
+
+        <select id="cpselect"></select>
+        <input type="button" id="side" value="+" style="width: 25px;" />
+        <div style="display: none;">
+            <input type="file" id="import" />
+            <input type="button" id="export_button" value="Export" style="display:none">
+            <div id="export" style="display:inline"></div>
+        </div>
     </div>
-    <div id="fold_controls" style="display:none">
-        <input type="button" id="fold_button" value="Fold">
-        <label for="limit_select">Limit</label>
-        <select id="limit_select"></select>
-        <label for="text">Text</label>
-        <input type="checkbox" id="text">
+
+    <div id="cutting">
+    </div>
+
+
+    <div style="display: flex;">
         <span id="num_states"></span>
+
         <div id="state_controls">
             <label for="flip">Flip</label>
-            <input type="checkbox" id="flip">
+            <input type="checkbox" id="flipfold">
             <label for="component_select">Component</label>
             <select id="component_select"></select>
         </div>
@@ -33,24 +42,72 @@
             <input id="state_select" type="number"></input>
         </div>
     </div>
-    <div>
-        <svg id="main">
-            <svg id="flat"></svg>
-            <svg id="cell"></svg>
-            <svg id="fold"></svg>
-        </svg>
+    <div style="display: flex;">
+        <div id="state_controls_dist">
+            <label for="flip_dist">Flip(distorted)</label>
+            <input type="checkbox" id="flipfold_dist">
+            <label for="component_select_dist">distorted Component</label>
+            <select id="component_select_dist"></select>
+        </div>
+        <div id="state_config_dist" style="display: none;">
+            <label for="state_select_dist" id="state_label_dist" style="display: inline;"></label>
+            <p>states</p>
+            <input id="state_select_dist" type="number" style="display: inline;"></input>
+        </div>
+
     </div>
+
+    <div id="main">
+    </div>
+    <span style="display: flex;">
+        <b>Distortion Parameters A0</b>
+        <div>
+            <label>rotation</label>
+            <input id="slider0" type="range" value="0.5" min="0" max="1" step="0.00001" />
+        </div>
+        <div>
+            <label>scale1</label>
+            <input id="slider1" type="range" value="0.5" min="0" max="1" step="0.00001" />
+        </div>
+        <div>
+            <label>scale2</label>
+            <input id="slider2" type="range" value="0.5" min="0" max="1" step="0.00001" />
+        </div>
+        <div>
+            <label>scale direction</label>
+            <input id="slider3" type="range" value="0" min="0" max="1" step="0.00001" />
+        </div>
+
+    </span>
+    <div id="fold_controls" style="display:inline">
+        <input type="button" id="fold_button" value="Fold" style="display: none;">
+        <label for="limit_select">Limit</label>
+        <select id="limit_select"></select>
+        <label for="text">Text</label>
+        <input type="checkbox" id="text" checked="checked">
+    </div>
+
+
+
+    <div style="display: flex;">
+        <b>View Parameters</b>
+        <div>
+            <label>angle</label>
+            <input id="slider4" type="range" value="0.5" min="0" max="2" step="0.0001" />
+        </div>
+        <div>
+            <label>X-spin</label>
+            <input id="slider5" type="range" value="0" min="0" max="1" step="0.0001" />
+        </div>
+    </div>
+
+
+
     <div>
-        <textarea id="console" rows=10 readonly
-        style="width:100%;background-color:darkgray;resize:none;
+        <textarea id="console" rows=10 readonly style="width:100%;background-color:darkgray;resize:none;
         font-family:monospace"></textarea>
-    </div>
-    <div>
-        © Jason S. Ku 2022
-        <a href="https://github.com/origamimagiro/flat-folder">
-            Code on Github
-        </a>
     </div>
     <script type="module" src="./src/main.js"></script>
 </body>
+
 </html>

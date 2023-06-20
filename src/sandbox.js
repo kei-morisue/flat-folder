@@ -1,15 +1,16 @@
-import { NOTE } from "./note.js";
-import { IO } from "./io.js";
+import { NOTE } from "./flat_folder/note.js";
+import { IO } from "./flat_folder/io.js";
 
 import { F } from "./fold.js";
 import { D } from "./distortion.js";
 
 
 import { CP } from "./cp.js";
-import { X } from "./conversion.js";
-import { GUI } from "./gui.js";
+import { X } from "./flat_folder/conversion.js";
+import { GUI } from "./flat_folder/gui.js";
 
-import { M } from "./math.js";
+import { M } from "./flat_folder/math.js";
+
 
 
 export const SB = {
@@ -28,8 +29,7 @@ export const SB = {
             const slider = slider_template.cloneNode(false)
             slider.setAttribute("id", base_name + "instance")
             slider.addEventListener(event_type, (e) => {
-                const GI = GUI.STORE_GI
-                SB.GI_2_DIST(FOLD, GI, BF, GB, GA)
+                SB.GI_2_DIST(FOLD, BF, GB, GA)
             })
             const resetbutton = document.createElement("button")
             resetbutton.setAttribute("id", base_name + "reset")
@@ -71,42 +71,48 @@ export const SB = {
 
         //constraint
         //F.compute_flat(FOLD, $flat, $cell, $fold)
-        const { BF, GB, GA } = F.compute_constraints($fold, FOLD, CELL)
-        F.update_state_control($fold, FOLD, CELL, BF, GB, GA)
+        const { BF, GB, GA } = F.compute_constraints(FOLD, CELL)
         SB.initialize_sliders(FOLD, BF, GB, GA)
 
-        const GI = GUI.STORE_GI
+        F.update_state_control($fold, FOLD, CELL, BF, GB, GA)
+
         //distortion
-        SB.GI_2_DIST(FOLD, GI, BF, GB, GA)
+        SB.GI_2_DIST(FOLD, BF, GB, GA)
+
     },
 
-    GI_2_DIST: (FOLD, GI, BF, GB, GA) => {
+    GI_2_DIST: (FOLD, BF, GB, GA) => {
+        const GI = GUI.STORE_GI
         const $foldn = document.getElementById("fold_dist")
         // inferred face oders
         const BA0 = SB.BF_GB_GA_GI_2_BA0(BF, GB, GA, GI)
-        const { FOLD_d, CELL_d } = SB.dist($foldn, FOLD, BA0)
+
+        const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI)
+        const { FOLD_d, CELL_d } = SB.dist($foldn, FOLD, BA0, edges)
         SB.set_flip_check_box("flipfold_dist", $foldn, FOLD_d, CELL_d)
     },
-    dist: ($fold, FOLD, BA0) => {
-        const $flat = document.getElementById("flat_dist")
+    dist: ($fold, FOLD, BA0, edges) => {
+        const svg_flat = document.getElementById("flat_dist")
         const $cell = document.getElementById("cell_dist")
-        const [Y, A0] = SB.get_parameters(M.min_line_length(X.FOLD_2_Lf(FOLD)) * 0.1)
+        const min_length = M.min_line_length(X.FOLD_2_Lf(FOLD));
+        const [Y, A0] = SB.get_parameters(min_length)
         const DIST = D.make_dist(FOLD, Y, A0)
-        F.compute_flat(DIST, $flat, $cell, $fold)
+        F.compute_flat(svg_flat, DIST)
 
 
         const CELLd = X.FOLD_2_CELL(DIST)
+        SB.set_flip_check_box("flipfold_dist", $fold, DIST, CELLd)
+
         GUI.update_cell($cell, CELLd)
-        const { BF, BT, sol } = F.compute_constraints_distorted($fold, DIST, CELLd, BA0)
-        F.set_text($flat, $cell, FOLD, CELLd)
-        GUI.update_cell_face_listeners($flat, $cell, DIST, CELLd, BF, BT, sol);
+        const { BF, BT, sol } = F.compute_constraints_distorted($fold, DIST, CELLd, BA0, edges)
+        F.set_text(svg_flat, $cell, FOLD, CELLd)
+        GUI.update_cell_face_listeners(svg_flat, $cell, DIST, CELLd, BF, BT, sol);
         return { FOLD_d: DIST, CELL_d: CELLd }
     },
 
     set_flip_check_box: (id, $fold, FOLD, CELL) => {
         document.getElementById(id).onchange = (e) => {
-            const flip = GUI.get_flip($fold)
-            GUI.update_fold($fold, FOLD, CELL, flip);
+            GUI.update_fold($fold, FOLD, CELL);
         };
     },
 
