@@ -230,10 +230,9 @@ export const GUI = {   // INTERFACE
         }
         return CF.map(F => F.length / max_layers);
     },
-    update_fold: ($fold, FOLD, CELL) => {
+    update_fold: (svg_fold, FOLD, CELL, flip) => {
         SVG.clear("export");
-        const flip = GUI.get_flip($fold)
-        SVG.clear_element($fold)
+        SVG.clear_element(svg_fold)
         const { EF, Ff } = FOLD;
         const { P_norm, SP, SE, CP, SC, CF, CD } = CELL;
         const tops = CD.map(S => flip ? S[0] : S[S.length - 1]);
@@ -246,16 +245,16 @@ export const GUI = {   // INTERFACE
             if (Ff[d] != flip) { return GUI.COLORS.face.top; }
             else { return GUI.COLORS.face.bottom; }
         });
-        SVG.draw_polygons($fold, cells, {
+        SVG.draw_polygons(svg_fold, cells, {
             id: "fold_c", fill: colors, stroke: colors
         });
         const lines = SP.map((ps) => M.expand(ps, Q));
-        SVG.draw_segments($fold, lines, {
+        SVG.draw_segments(svg_fold, lines, {
             id: "fold_s_crease", stroke: GUI.COLORS.edge.F,
             stroke_width: GUI.WIDTH.CREASE,
             filter: (i) => SD[i] == "C"
         });
-        SVG.draw_segments($fold, lines, {
+        SVG.draw_segments(svg_fold, lines, {
             id: "fold_s_edge", stroke: GUI.COLORS.edge.B,
             stroke_width: GUI.WIDTH.BOLD,
             filter: (i) => SD[i] == "B"
@@ -264,11 +263,10 @@ export const GUI = {   // INTERFACE
 
     STORE_GI: undefined,
 
-    get_flip: ($fold) => {
-        const id = $fold.getAttribute("id")
+    get_flip: (checked) => {
         const [Y] = SB.get_parameters(0)
         const is_transform_flip = LIN.det(Y) < 0
-        return document.getElementById("flip" + id).checked ^ is_transform_flip
+        return checked ^ is_transform_flip
     },
     update_component: ($fold, FOLD, CELL, BF, GB, GA, GI, $cell = undefined) => {
         SVG.clear("export");
@@ -305,7 +303,9 @@ export const GUI = {   // INTERFACE
                 const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI);
                 FOLD.FO = X.edges_Ff_2_FO(edges, GUI.STORE_FOLD.Ff);
                 CELL.CD = X.CF_edges_flip_2_CD(CELL.CF, edges);
-                GUI.update_fold($fold, FOLD, CELL);
+                const id = $fold.getAttribute("id")
+                const flip = GUI.get_flip(document.getElementById("flip" + id).checked)
+                GUI.update_fold($fold, FOLD, CELL, flip);
                 GUI.STORE_GI = GI
                 SB.GI_2_DIST(FOLD, GI, BF, GB, GA)
                 NOTE.end();
@@ -370,19 +370,14 @@ export const GUI = {   // INTERFACE
         const active = [];
         const flat_notes = document.getElementById(id_flat + "flat_notes");
         const cell_notes = document.getElementById(id_cell + "cell_notes");
-        NOTE.start_check("face", FC);
         for (const [i, C] of FC.entries()) {
-            NOTE.check(i);
             const face = document.getElementById(id_flat + `flat_f${i}`);
             face.onclick = () => {
-                NOTE.time(`Clicked face ${i}`);
                 const color = face.getAttribute("fill");
                 GUI.clear_notes($flat, $cell, CF, FC, true);
                 if (active.length == 1) {
                     if (color != GUI.COLORS.B) {
                         active.pop();
-                        NOTE.log("   - Clearing selection");
-                        NOTE.log("");
                         return;
                     }
                     active.push(i);
@@ -395,12 +390,6 @@ export const GUI = {   // INTERFACE
                         SL.push(Ti.map((t) => `[${t.join(",")}]`));
                     }
                     SL.push(Array.from(T[3]).map(x => M.decode(x)));
-                    NOTE.log(`   - variable ${ti} between faces [${f1},${f2}]`);
-                    NOTE.log(`   - taco-taco: [${SL[0]}]`);
-                    NOTE.log(`   - taco-tortilla: [${SL[1]}]`);
-                    NOTE.log(`   - tortilla-tortilla: [${SL[2]}]`);
-                    NOTE.log(`   - transitivity: [${SL[3]}]`);
-                    NOTE.log("");
                     for (const j of [3, 1]) {
                         const Tj = (j == 1) ? T[j] : M.decode(T[j]);
                         for (const F of Tj) {
@@ -449,15 +438,9 @@ export const GUI = {   // INTERFACE
                 } else {
                     while (active.length > 0) { active.pop(); }
                     if (color != GUI.COLORS.face.bottom) {
-                        NOTE.log("   - Clearing selection");
-                        NOTE.log("");
                         return;
                     }
                     active.push(i);
-                    NOTE.log(`   - bounded by vertices [${FV[i]}]`);
-                    NOTE.log(`   - bounded by edges [${FE[i]}]`);
-                    NOTE.log(`   - overlaps cells [${FC[i]}]`);
-                    NOTE.log("");
                     for (const f of FB[i]) {
                         const el = document.getElementById(id_flat + `flat_f${f}`);
                         el.setAttribute("fill", GUI.COLORS.B);
@@ -489,18 +472,11 @@ export const GUI = {   // INTERFACE
         for (const [i, F] of CF.entries()) {
             const cell = document.getElementById(id_cell + `cell_c${i}`);
             cell.onclick = () => {
-                NOTE.time(`Clicked cell ${i}`);
                 const active = (cell.getAttribute("fill") == GUI.COLORS.active);
                 GUI.clear_notes($flat, $cell, CF, FC, !active);
                 if (active) {
-                    NOTE.log("   - Clearing selection");
-                    NOTE.log("");
                     return;
                 }
-                NOTE.log(`   - bounded by points [${CP[i]}]`);
-                NOTE.log(`   - bounded by segments [${CS[i]}]`);
-                NOTE.log(`   - overlaps faces [${CF[i]}]`);
-                NOTE.log("");
                 GUI.add_active(cell, F, id_flat + "flat_f");
                 const L = [];
                 const Lcolors = [];
@@ -527,16 +503,8 @@ export const GUI = {   // INTERFACE
         if (sol.length == 3) { // solve found unsatisfiable constraint
             const [type, F, E] = sol;
             const str = `Unable to resolve ${CON.names[type]} on faces [${F}]`;
-            NOTE.log(`   - ${str}`);
-            NOTE.log(`   - Faces participating in conflict: [${E}]`);
-            GUI.update_error($flat, $cell, F, E, BF, FC);
-            NOTE.time("Solve completed");
-            NOTE.count(0, "folded states");
             const num_states = document.getElementById("num_states");
             num_states.textContent = `(Found 0 states) ${str}`;
-            NOTE.lap();
-            stop = Date.now();
-            NOTE.end();
             return sol;
         }
     },

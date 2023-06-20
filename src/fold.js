@@ -43,7 +43,10 @@ export const F = {
          */
         DIST.FO = X.edges_Ff_2_FO(edges, DIST.Ff);
         CELL.CD = X.CF_edges_flip_2_CD(CELL.CF, edges);
-        GUI.update_fold($fold, DIST, CELL);
+
+        const id = $fold.getAttribute("id")
+        const flip = GUI.get_flip(document.getElementById("flip" + id).checked)
+        GUI.update_fold($fold, DIST, CELL, flip);
         return { BF, BT, sol }
     },
 
@@ -98,9 +101,10 @@ export const F = {
         comp_select.onchange = (e) => {
             NOTE.start("Changing component");
             const C = GUI.update_component($fold, FOLD, CELL, BF, GB, GA, GI, $cell);
-            NOTE.end();
         };
-        GUI.update_fold($fold, FOLD, CELL);
+        const id = $fold.getAttribute("id")
+        const flip = GUI.get_flip(document.getElementById("flip" + id).checked)
+        GUI.update_fold($fold, FOLD, CELL, flip);
         GUI.update_component($fold, FOLD, CELL, BF, GB, GA, GI, $cell);
     },
 

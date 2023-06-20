@@ -1,15 +1,12 @@
-import { NOTE } from "./flat_folder/note.js";
 import { IO } from "./flat_folder/io.js";
 
 import { F } from "./fold.js";
 import { D } from "./distortion.js";
-
-
 import { CP } from "./cp.js";
 import { X } from "./flat_folder/conversion.js";
 import { GUI } from "./flat_folder/gui.js";
-
 import { M } from "./flat_folder/math.js";
+import { CUT } from "./cut.js";
 
 
 
@@ -17,7 +14,9 @@ export const SB = {
     initialize_sliders: (FOLD, BF, GB, GA) => {
         const event_type = "input"
         const sliders = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById("slider" + i));
-
+        const handler = () => {
+            SB.GI_2_DIST(FOLD, BF, GB, GA)
+        }
         for (const slider_template of sliders) {
             const base_name = slider_template.getAttribute("id")
             const old_slider = document.getElementById(base_name + "instance")
@@ -26,11 +25,13 @@ export const SB = {
                 old_slider.remove()
                 old_reset.remove()
             }
+
+
             const slider = slider_template.cloneNode(false)
             slider.setAttribute("id", base_name + "instance")
-            slider.addEventListener(event_type, (e) => {
-                SB.GI_2_DIST(FOLD, BF, GB, GA)
-            })
+            slider.oninput = handler
+
+
             const resetbutton = document.createElement("button")
             resetbutton.setAttribute("id", base_name + "reset")
             resetbutton.innerHTML = "reset"
@@ -55,10 +56,9 @@ export const SB = {
 
         return [X_input, A0_input,]
     },
+
+
     sandbox: () => {
-        //const $flat = document.getElementById("flat")
-        //const $cell = document.getElementById("cell")
-        const $fold = document.getElementById("fold")
 
         // FOLD
         const FOLD = IO.doc_type_2_FOLD(
@@ -66,19 +66,22 @@ export const SB = {
             "cp",
             document.getElementById("side").value)
         const CELL = X.FOLD_2_CELL(FOLD)
-        SB.set_flip_check_box("flipfold", $fold, FOLD, CELL)
+        const svg_fold = document.getElementById("fold")
 
+        SB.set_flip_check_box("flipfold", svg_fold, FOLD, CELL)
 
         //constraint
         //F.compute_flat(FOLD, $flat, $cell, $fold)
         const { BF, GB, GA } = F.compute_constraints(FOLD, CELL)
         SB.initialize_sliders(FOLD, BF, GB, GA)
 
-        F.update_state_control($fold, FOLD, CELL, BF, GB, GA)
+        F.update_state_control(svg_fold, FOLD, CELL, BF, GB, GA)
 
         //distortion
         SB.GI_2_DIST(FOLD, BF, GB, GA)
 
+        //cutting
+        CUT.cut(FOLD, CELL)
     },
 
     GI_2_DIST: (FOLD, BF, GB, GA) => {
@@ -90,15 +93,16 @@ export const SB = {
         const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI)
         const { FOLD_d, CELL_d } = SB.dist($foldn, FOLD, BA0, edges)
         SB.set_flip_check_box("flipfold_dist", $foldn, FOLD_d, CELL_d)
+        console.log(performance.memory);
+
     },
     dist: ($fold, FOLD, BA0, edges) => {
         const svg_flat = document.getElementById("flat_dist")
         const $cell = document.getElementById("cell_dist")
         const min_length = M.min_line_length(X.FOLD_2_Lf(FOLD));
-        const [Y, A0] = SB.get_parameters(min_length)
+        const [Y, A0] = SB.get_parameters(0.1 * Math.pow(min_length, 0.3))
         const DIST = D.make_dist(FOLD, Y, A0)
         F.compute_flat(svg_flat, DIST)
-
 
         const CELLd = X.FOLD_2_CELL(DIST)
         SB.set_flip_check_box("flipfold_dist", $fold, DIST, CELLd)
@@ -106,18 +110,22 @@ export const SB = {
         GUI.update_cell($cell, CELLd)
         const { BF, BT, sol } = F.compute_constraints_distorted($fold, DIST, CELLd, BA0, edges)
         F.set_text(svg_flat, $cell, FOLD, CELLd)
+
         GUI.update_cell_face_listeners(svg_flat, $cell, DIST, CELLd, BF, BT, sol);
         return { FOLD_d: DIST, CELL_d: CELLd }
     },
 
     set_flip_check_box: (id, $fold, FOLD, CELL) => {
-        document.getElementById(id).onchange = (e) => {
-            GUI.update_fold($fold, FOLD, CELL);
-        };
+        const handler = () => {
+            const id = $fold.getAttribute("id")
+            const flip = GUI.get_flip(document.getElementById("flip" + id).checked)
+            GUI.update_fold($fold, FOLD, CELL, flip);
+        }
+
+        document.getElementById(id).onchange = handler
     },
 
     BF_GB_GA_GI_2_BA0: (BF, GB, GA, GI) => {
-        NOTE.start_check("group", GB);
         const BI_map = new Map();
         for (const [i, k] of BF.entries()) {
             BI_map.set(k, i);

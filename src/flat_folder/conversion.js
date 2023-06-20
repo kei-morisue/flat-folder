@@ -1,6 +1,5 @@
 import { M } from "./math.js";
 import { CON } from "./constraints.js";
-import { NOTE } from "./note.js";
 import { SOLVER } from "./solver.js";
 
 export const X = {     // CONVERSION
@@ -18,9 +17,7 @@ export const X = {     // CONVERSION
         });
         const P = [];   // point with corresponding edge index [[x, y], i]
         let crossings = [];
-        NOTE.start_check("line", L);
         for (const [i, idx] of I.entries()) {    // find line-line intersections
-            NOTE.check(i);
             const [a, b] = L[idx];
             P.push([a, idx]);
             P.push([b, idx]);
@@ -417,9 +414,8 @@ export const X = {     // CONVERSION
     },
     CF_2_BF: (CF) => {                          // O(|C|t^2) <= O(|F|^4)
         const BF_set = new Set();               // t is max faces in a cell
-        NOTE.start_check("cell", CF);           // t^2 = O(|B|) <= O(|F|^2)
+        // t^2 = O(|B|) <= O(|F|^2)
         for (const [i, F] of CF.entries()) {    // |C| = O(|F|^2)
-            NOTE.check(i);
             for (const [j, f1] of F.entries()) {
                 for (let k = j + 1; k < F.length; k++) {
                     const f2 = F[k];
@@ -454,10 +450,7 @@ export const X = {     // CONVERSION
         for (const [i, F] of BF.entries()) {
             BF_map.set(F, i);
         }
-        NOTE.time("Computing from edge-edge intersections");
-        NOTE.start_check("edge-edge intersection", ExE);
         for (const [i, k] of ExE.entries()) {
-            NOTE.check(i);
             const [e1, e2] = M.decode(k);
             if ((EF[e1].length != 2) || (EF[e2].length != 2)) { continue; }
             const [f1, f2] = EF[e1];
@@ -489,10 +482,7 @@ export const X = {     // CONVERSION
             }
             X.add_constraint(cons, BF_map, BT);
         }
-        NOTE.time("Computing from edge-face intersections");
-        NOTE.start_check("edge-face intersection", ExF);
         for (const [i, k] of ExF.entries()) {
-            NOTE.check(i);
             const [e, f3] = M.decode(k);
             if (EF[e].length != 2) { continue; }
             const [f1, f2] = EF[e];
@@ -506,11 +496,8 @@ export const X = {     // CONVERSION
             }
             X.add_constraint(cons, BF_map, BT);
         }
-        NOTE.time("Cleaning transitivity constraints");
         const T3 = new Set();
-        NOTE.start_check("variable", BF);
         for (const [i, k] of BF.entries()) {
-            NOTE.check(i);
             for (const f3 of M.decode(BT3[i])) {
                 T3.add(f3);
             }
@@ -531,9 +518,8 @@ export const X = {     // CONVERSION
         const BT3 = [];                          // k is max cells in a face,
         const FC_sets = FC.map(C => new Set(C)); // t is max faces in a cell
         const T = new Set();                     // k = O(|C|) <= O(|F|^2)
-        NOTE.start_check("variable", BF);        // t = O(|F|)
+        // t = O(|F|)
         for (const [i, k] of BF.entries()) {     // |B| = O(|F|^2)
-            NOTE.check(i);
             const [f1, f2] = M.decode(k);
             const C = FC_sets[f1];
             for (const c of FC[f2]) {
@@ -569,9 +555,7 @@ export const X = {     // CONVERSION
     },
     BF_GB_GA_GI_2_edges: (BF, GB, GA, GI) => {
         const edges = [];
-        NOTE.start_check("group", GB);
         for (const [i, B] of GB.entries()) {
-            NOTE.check(i);
             const orders = M.bit_decode(GA[i][GI[i]], B.length);
             for (const [j, F] of B.entries()) {
                 const [f1, f2] = M.decode(BF[F]);
@@ -589,9 +573,7 @@ export const X = {     // CONVERSION
     },
     CF_edges_flip_2_CD: (CF, edges) => {
         const edge_map = new Set(edges);
-        NOTE.start_check("cell", CF);
         return CF.map((F, i) => {
-            NOTE.check(i);
             const S = F.map(i => i);
             S.sort((a, b) => (edge_map.has(M.encode([a, b])) ? 1 : -1));
             return S;
@@ -610,9 +592,7 @@ export const X = {     // CONVERSION
             }
         }
         const SE_map = SE.map(E => new Set(E));
-        NOTE.start_check("segment", SC);
         return SC.map((C, i) => {
-            NOTE.check(i);
             if ((C.length == 2) &&
                 (CF[C[0]].length > 0) &&
                 (CF[C[1]].length > 0)
@@ -646,14 +626,8 @@ export const X = {     // CONVERSION
 
     V_VV_EV_EA_2_f: (V, VV, EV, EA, FV) => {
         const VK = X.V_VV_EV_EA_2_VK(V, VV, EV, EA);//Kawasaki properties
-        NOTE.annotate(V, "vertices_coords");
-        NOTE.annotate(EV, "edges_vertices");
-        NOTE.annotate(EA, "edges_assignments");
         const [Vf, Ff] = X.V_FV_EV_EA_2_Vf_Ff(V, FV, EV, EA);
         const Vf_norm = M.normalize_points(Vf);
-        NOTE.annotate(Vf, "vertices_coords_folded");
-        NOTE.annotate(Ff, "faces_flip");
-        NOTE.lap();
         return [VK, Vf, Ff, Vf_norm]
     },
 
@@ -662,61 +636,26 @@ export const X = {     // CONVERSION
     },
 
     FOLD_2_CELL: (FOLD) => {
-        NOTE.start("*** Computing cell graph ***");
         const { EF, FV } = FOLD;
         const L = X.FOLD_2_Lf(FOLD);
         FOLD.eps = M.min_line_length(L) / M.EPS / 1000;
-        NOTE.time(`Using eps ${FOLD.eps} from min line length ${FOLD.eps * M.EPS} (factor ${M.EPS})`);
-        NOTE.time("Constructing points and segments from edges");
         const [P, SP, SE] = X.L_2_V_EV_EL(L, FOLD.eps);
         const P_norm = M.normalize_points(P);
-        NOTE.annotate(P, "points_coords");
-        NOTE.annotate(SP, "segments_points");
-        NOTE.annotate(SE, "segments_edges");
-        NOTE.lap();
-        NOTE.time("Constructing cells from segments");
         const [, CP] = X.V_EV_2_VV_FV(P, SP);
-        NOTE.annotate(CP, "cells_points");
-        NOTE.lap();
-        NOTE.time("Computing segments_cells");
         const [SC, CS] = X.EV_FV_2_EF_FE(SP, CP);
-        NOTE.annotate(SC, "segments_cells");
-        NOTE.annotate(CS, "cells_segments");
-        NOTE.lap();
-        NOTE.time("Making face-cell maps");
         const [CF, FC] = X.EF_FV_SP_SE_CP_SC_2_CF_FC(EF, FV, SP, SE, CP, SC);
-        NOTE.count(CF, "face-cell adjacencies");
-        NOTE.lap();
         return { P, P_norm, SP, SE, CP, CS, SC, CF, FC };
     },
 
     FOLD_CELL_2_BF_BT: (FOLD, CELL) => {
         const { Vf, EF, FV } = FOLD;
         const { SE, SC, CF, FC } = CELL;
-        NOTE.time("Computing edge-edge overlaps");
         const ExE = X.SE_2_ExE(SE);
-        NOTE.count(ExE, "edge-edge adjacencies");
-        NOTE.lap();
-        NOTE.time("Computing edge-face overlaps");
         const ExF = X.SE_CF_SC_2_ExF(SE, CF, SC);
-        NOTE.count(ExF, "edge-face adjacencies");
-        NOTE.lap();
-        NOTE.time("Computing variables");
         const BF = X.CF_2_BF(CF);
-        NOTE.annotate(BF, "variables_faces");
-        NOTE.lap();
-        NOTE.time("Computing transitivity constraints");
         const BT3 = X.FC_CF_BF_2_BT3(FC, CF, BF);
-        NOTE.count(BT3, "initial transitivity", 3);
-        NOTE.lap();
-        NOTE.time("Computing non-transitivity constraints");
         const [BT0, BT1, BT2] = X.BF_EF_ExE_ExF_BT3_2_BT0_BT1_BT2(BF, EF, ExE, ExF, BT3);
-        NOTE.count(BT0, "taco-taco", 6);
-        NOTE.count(BT1, "taco-tortilla", 3);
-        NOTE.count(BT2, "tortilla-tortilla", 2);
-        NOTE.count(BT3, "independent transitivity", 3);
         const BT = BF.map((F, i) => [BT0[i], BT1[i], BT2[i], BT3[i]]);
-        NOTE.lap();
         return [BF, BT]
     },
 

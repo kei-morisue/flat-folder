@@ -1,4 +1,3 @@
-import { NOTE } from "./flat_folder/note.js";
 import { IO } from "./flat_folder/io.js";
 import { F } from "./fold.js";
 import { CP } from "./cp.js";
@@ -17,8 +16,11 @@ export const CTRL = {
 
     initialize_canvas: () => {
         GUI.initiate_canvas(
-            document.getElementById("main"),
+            document.getElementById("distortion"),
             ["flat_dist", "cell_dist", "fold_dist", "fold"])
+        GUI.initiate_canvas(
+            document.getElementById("cutting"),
+            ["flat_cut", "fold_cut"])
     },
 
     initialize_cp_select: () => {
@@ -29,7 +31,7 @@ export const CTRL = {
             el.textContent = k;
             sel.appendChild(el);
         }
-        sel.value = "testcp_pleat"
+        sel.value = "testcp"
         sel.onchange = (e) => {
             SB.sandbox()
         };
@@ -67,13 +69,10 @@ export const CTRL = {
     },
 
     import_file: (e) => {
-        NOTE.clear_log();
-        NOTE.start("*** Starting File Import ***");
         const doc = e.target.result;
         const file_name = document.getElementById("import").value;
         const parts = file_name.split(".");
         const type = parts[parts.length - 1].toLowerCase();
-        NOTE.time(`Importing from file ${file_name}`);
         const FOLD = IO.doc_type_2_FOLD(
             doc,
             type,
