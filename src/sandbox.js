@@ -93,7 +93,6 @@ export const SB = {
         const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI)
         const { FOLD_d, CELL_d } = SB.dist($foldn, FOLD, BA0, edges)
         SB.set_flip_check_box("flipfold_dist", $foldn, FOLD_d, CELL_d)
-        console.log(performance.memory);
 
     },
     dist: ($fold, FOLD, BA0, edges) => {
