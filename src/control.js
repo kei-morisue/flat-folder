@@ -13,14 +13,22 @@ export const CTRL = {
         CTRL.initialize_side()
         SB.sandbox()
     },
+    set_flip_check_box: (id, $fold, FOLD, CELL) => {
+        const handler = () => {
+            const id = $fold.getAttribute("id")
+            const flip = GUI.get_flip(document.getElementById("flip" + id).checked)
+            GUI.update_fold($fold, FOLD, CELL, flip);
+        }
 
+        document.getElementById(id).onchange = handler
+    },
     initialize_canvas: () => {
         GUI.initiate_canvas(
             document.getElementById("distortion"),
             ["flat_dist", "cell_dist", "fold_dist", "fold"])
         GUI.initiate_canvas(
             document.getElementById("cutting"),
-            ["flat_cut", "fold_cut"])
+            ["fold_cut", "flat_cut", "flat_cut_faces", "fold_cut_faces"])
     },
 
     initialize_cp_select: () => {
@@ -31,7 +39,7 @@ export const CTRL = {
             el.textContent = k;
             sel.appendChild(el);
         }
-        sel.value = "testcp"
+        sel.value = "testcp3"
         sel.onchange = (e) => {
             SB.sandbox()
         };
@@ -62,7 +70,10 @@ export const CTRL = {
     },
 
     initialize_side: () => {
-        document.getElementById("side").onclick = (e) => {
+
+        const side = document.getElementById("side");
+        side.value = "+"
+        side.onclick = (e) => {
             const side = ((e.target.value == "+") ? "-" : "+");
             e.target.setAttribute("value", side);
         };

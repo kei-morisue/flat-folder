@@ -2,7 +2,7 @@ import { M } from "./math.js";
 import { NOTE } from "./note.js";
 import { X } from "./conversion.js";
 import { SVG } from "./svg.js";
-import { SB } from "../sandbox.js";
+import { D } from "../distortion.js";
 import { CON } from "./constraints.js";
 
 import { LIN } from "../linear.js";
@@ -149,45 +149,39 @@ export const GUI = {   // INTERFACE
             });
         }
     },
-    update_flat: ($flat, FOLD) => {
-        SVG.clear_element($flat)
-        const prefix = $flat.getAttribute("id")
+    update_flat: (svg, FOLD) => {
+        if (FOLD == undefined) { return; }
+        SVG.clear("export");
+        SVG.clear_element(svg)
+        const prefix = svg.getAttribute("id")
         const { V, VK, EV, EA, FV } = FOLD;
         const F = FV.map(f => M.expand(f, V));
-        SVG.draw_polygons($flat, F, { id: prefix + "flat_f", fill: GUI.COLORS.face.bottom });
-        SVG.append("g", $flat, { id: prefix + "flat_shrunk" });
+        SVG.draw_polygons(svg, F, { id: prefix + "flat_f", fill: GUI.COLORS.face.bottom });
+        SVG.append("g", svg, { id: prefix + "flat_shrunk" });
         const K = [];
         const eps = 1 / M.EPS;
         for (const [i, k] of VK.entries()) {
             if (k > eps) { K.push(V[i]); }
         }
-        SVG.draw_points($flat, K, { id: prefix + "flat_check", fill: "red", r: 10 });
+        SVG.draw_points(svg, K, { id: prefix + "flat_check", fill: "red", r: 10 });
         const lines = EV.map(l => M.expand(l, V));
         const colors = EA.map(a => GUI.COLORS.edge[a]);
-        SVG.draw_segments($flat, lines, {
+        SVG.draw_segments(svg, lines, {
             id: prefix + "flat_e_flat", stroke: colors,
             stroke_width: GUI.WIDTH.BOLD, filter: (i) => (EA[i] != "F")
         });
-        SVG.draw_segments($flat, lines, {
+        SVG.draw_segments(svg, lines, {
             id: prefix + "flat_e_folded", stroke: colors,
             stroke_width: GUI.WIDTH.CREASE, filter: (i) => (EA[i] == "F")
         });
-        SVG.append("g", $flat, { id: prefix + "flat_text" });
-        SVG.append("g", $flat, { id: prefix + "flat_notes" });
-        GUI.update_text_flat($flat, FOLD);
+        SVG.append("g", svg, { id: prefix + "flat_text" });
+        SVG.append("g", svg, { id: prefix + "flat_notes" });
+        GUI.update_text_flat(svg, FOLD);
+        document.getElementById("text").onchange = () => {
+            GUI.update_text_flat(svg, FOLD);
+        };
     },
-    update_cell_lazy: ($cell, FOLD) => {
-        const id_cell = $cell.getAttribute("id")
-        SVG.clear_element($cell)
-        const F = FOLD.FV.map(f => M.expand(f, FOLD.Vf_norm));
-        SVG.draw_polygons(
-            $cell,
-            F,
-            { id: id_cell + "cell_f", opacity: 0.05 });
-        SVG.append("g", $cell, { id: id_cell + "cell_text" });
-        SVG.append("g", $cell, { id: id_cell + "cell_notes" });
-        SVG.append("g", $cell, { id: id_cell + "component_notes" });
-    },
+
     update_cell: ($cell, CELL) => {
         const id_cell = $cell.getAttribute("id")
         SVG.clear_element($cell)
@@ -261,16 +255,16 @@ export const GUI = {   // INTERFACE
         });
     },
 
-    STORE_GI: undefined,
 
     get_flip: (checked) => {
-        const [Y] = SB.get_parameters(0)
-        const is_transform_flip = LIN.det(Y) < 0
+        //const [Y] = D.get_parameters(0)
+        //const is_transform_flip = LIN.det(Y) < 0
+        const is_transform_flip = false
         return checked ^ is_transform_flip
     },
     update_component: ($fold, FOLD, CELL, BF, GB, GA, GI, $cell = undefined) => {
         SVG.clear("export");
-        GUI.STORE_GI = GI
+        FOLD.GI = GI
 
         const comp_select = document.getElementById("component_select");
         const c = comp_select.value;
@@ -301,13 +295,13 @@ export const GUI = {   // INTERFACE
                 state_select.value = j;
                 GI[c] = j - 1;
                 const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI);
-                FOLD.FO = X.edges_Ff_2_FO(edges, GUI.STORE_FOLD.Ff);
+                FOLD.FO = X.edges_Ff_2_FO(edges, FOLD.Ff);
                 CELL.CD = X.CF_edges_flip_2_CD(CELL.CF, edges);
                 const id = $fold.getAttribute("id")
                 const flip = GUI.get_flip(document.getElementById("flip" + id).checked)
                 GUI.update_fold($fold, FOLD, CELL, flip);
-                GUI.STORE_GI = GI
-                SB.GI_2_DIST(FOLD, GI, BF, GB, GA)
+                FOLD.GI = GI
+                D.GI_2_DIST(FOLD, BF, GB, GA)
                 NOTE.end();
             };
         }

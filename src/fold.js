@@ -8,16 +8,6 @@ import { SOLVER } from "./flat_folder/solver.js";
 export const F = {
 
 
-    compute_flat: (svg, FOLD) => {
-        if (FOLD == undefined) { return; }
-        SVG.clear("export");
-        SVG.clear_element(svg)
-        GUI.update_flat(svg, FOLD);
-        document.getElementById("text").onchange = () => {
-            GUI.update_text_flat(svg, FOLD);
-        };
-    },
-
     set_text: (svg_flat, svg_cell, FOLD, CELL) => {
         document.getElementById("text").onchange = (e) => {
             GUI.update_text_flat(svg_flat, FOLD)
