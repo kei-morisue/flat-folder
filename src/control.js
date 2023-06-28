@@ -13,11 +13,11 @@ export const CTRL = {
         CTRL.initialize_side()
         SB.sandbox()
     },
-    set_flip_check_box: (id, $fold, FOLD, CELL) => {
+    set_flip_check_box: (id, svg, FOLD, CELL) => {
         const handler = () => {
-            const id = $fold.getAttribute("id")
+            const id = svg.getAttribute("id")
             const flip = GUI.get_flip(document.getElementById("flip" + id).checked)
-            GUI.update_fold($fold, FOLD, CELL, flip);
+            GUI.update_fold(svg, FOLD, CELL, flip);
         }
 
         document.getElementById(id).onchange = handler
@@ -28,7 +28,7 @@ export const CTRL = {
             ["flat_dist", "cell_dist", "fold_dist", "fold"])
         GUI.initiate_canvas(
             document.getElementById("cutting"),
-            ["fold_cut", "flat_cut", "flat_cut_faces", "fold_cut_faces"])
+            ["fold_ray", "flat_cut", "fold_cut"])
     },
 
     initialize_cp_select: () => {
@@ -44,7 +44,6 @@ export const CTRL = {
             SB.sandbox()
         };
     },
-
 
 
     initialize_limit: () => {

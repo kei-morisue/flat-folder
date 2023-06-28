@@ -25,10 +25,15 @@
         </div>
     </div>
 
-    <div>
-        <label for="flipfold_cut">Flip(cutting)</label>
-        <input type="checkbox" id="flipfold_cut">
-
+    <div style="display: flex;">
+        <label for="flipfold_ray">Flip(cutting)</label>
+        <input type="checkbox" id="flipfold_ray">
+        <label for="cutside">Cut Side flip</label>
+        <input type="checkbox" id="cutside">
+        <label for="cutslect">Cut group</label>
+        <select id="cutselect">
+            <option value="0"></option>
+        </select>
     </div>
     <div id="cutting" class="svg-area">
     </div>

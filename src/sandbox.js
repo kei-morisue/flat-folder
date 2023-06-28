@@ -6,6 +6,7 @@ import { CP } from "./cp.js";
 import { X } from "./flat_folder/conversion.js";
 import { M } from "./flat_folder/math.js";
 import { C } from "./cut.js";
+import { CGUI } from "./c_gui.js";
 import { CTRL } from "./control.js";
 
 
@@ -71,7 +72,8 @@ export const SB = {
         D.GI_2_DIST(FOLD, BF, GB, GA)
 
         //cutting
-        C.cut(FOLD, CELL)
+        const CUT = C.cut(FOLD, CELL)
+        CGUI.update_cut_select(FOLD, CELL, CUT.sG)
     },
 
 }
