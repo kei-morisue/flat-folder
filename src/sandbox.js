@@ -69,11 +69,11 @@ export const SB = {
         F.update_state_control(svg_fold, FOLD, CELL, BF, GB, GA)
 
         //distortion
-        D.GI_2_DIST(FOLD, BF, GB, GA)
-
+        const edges = D.GI_2_DIST(FOLD, BF, GB, GA)
+        FOLD.edges = edges
         //cutting
-        const CUT = C.cut(FOLD, CELL)
-        CGUI.update_cut_select(FOLD, CELL, CUT.sG)
+        const CC = C.cut(FOLD, CELL)
+        CGUI.update_cut(CC.CUT, CC.CELL)
     },
 
 }

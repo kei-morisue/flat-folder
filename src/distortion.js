@@ -73,7 +73,7 @@ export const D = {
         const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI)
         const { FOLD_d, CELL_d } = D.dist($foldn, FOLD, BA0, edges)
         CTRL.set_flip_check_box("flipfold_dist", $foldn, FOLD_d, CELL_d)
-
+        return edges
     },
     dist: ($fold, FOLD, BA0, edges) => {
         const svg_flat = document.getElementById("flat_dist")

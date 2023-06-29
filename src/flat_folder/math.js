@@ -23,6 +23,7 @@ export const M = {     // MATH
     add: ([x1, y1], [x2, y2]) => [x1 + x2, y1 + y2],
     sub: ([x1, y1], [x2, y2]) => [x1 - x2, y1 - y2],
     dot: ([x1, y1], [x2, y2]) => x1 * x2 + y1 * y2,
+    cross: ([x1, y1], [x2, y2]) => x1 * y2 - y1 * x2,
     magsq: (v) => M.dot(v, v),
     mag: (v) => Math.sqrt(M.magsq(v)),
     unit: (v) => M.mul(v, 1 / M.mag(v)),
@@ -137,6 +138,28 @@ export const M = {     // MATH
         }
         const d = M.dot(M.unit(M.perp(v)), M.sub(c, a));
         return (Math.abs(d) <= eps);
+    },
+
+    inside: (v, P) => {
+        //Suppose V is off from any of edges that P defines
+        let side = undefined
+        let p0 = P[P.length - 1]
+        for (const p of P) {
+            const d = M.sub(p, p0)
+            const dv = M.sub(v, p0)
+            const side0 = M.cross(d, dv) > 0
+            if (side == undefined) {
+                side = side0
+                p0 = p
+                continue
+            }
+            if (side != side0) {
+                return false
+            }
+
+            p0 = p
+        }
+        return true
     },
     polygon_area2: (P) => {
         let area = 0;

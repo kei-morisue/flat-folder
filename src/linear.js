@@ -28,4 +28,7 @@ export const LIN = {
         const T = [[a, c], [b, d]]
         return [LIN.apply(T, x), LIN.apply(T, y)]
     },
+    outer: (x, [c, d]) => {
+        return [M.mul(x, c), M.mul(x, d)]
+    }
 }

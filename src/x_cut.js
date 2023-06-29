@@ -78,18 +78,18 @@ export const XCUT = {
 
 
 
-    marge_Lcut_2_Lfold: (L1, L2, eps) => {
+    marge_Lcut_2_Lfold: (Lc, Lf, eps) => {
         const epssq = eps * eps
-        for (const [i_f, lf] of L1.entries()) {
-            const p1 = lf[0]
-            const q1 = lf[1]
+        for (const [i_c, lc] of Lc.entries()) {
+            const p1 = lc[0]
+            const q1 = lc[1]
             let found = false
-            for (const [i_2, l2] of L2.entries()) {
-                const p2 = l2[0]
-                const q2 = l2[1]
+            for (const [i_f, lf] of Lf.entries()) {
+                const p2 = lf[0]
+                const q2 = lf[1]
                 if (M.distsq(p1, p2) < epssq && M.distsq(q1, q2) < epssq ||
                     M.distsq(p1, q2) < epssq && M.distsq(q1, p2) < epssq) {
-                    l2[2] = "C"
+                    lf[2] = "C"
                     found = true
                     break
                 }
@@ -97,9 +97,9 @@ export const XCUT = {
             if (found) {
                 continue
             }
-            L2.push(lf)
+            Lf.push(lc)
         }
-        return L2
+        return Lf
 
     },
 
@@ -143,7 +143,7 @@ export const XCUT = {
     },
 
 
-    EF_EA_FG_FE_2_Fs: (EF, EA, FG, FE) => {
+    EF_EA_FG_FE_2_Fs: (EF, EA, FG, FE, FOLD) => {
         const Fs = new Array(FG.length);
 
         const seen = new Set();
@@ -157,8 +157,9 @@ export const XCUT = {
             seen.add(i_fq)
             for (const i_e of FE[i_fq]) {
                 const assign = EA[i_e]
+                const assign_f = FOLD.EA[i_e]
                 const [i_f1, i_f2] = EF[i_e]
-                const queue_side = assign == "C" ? !side : side;
+                const queue_side = (assign == "C" && assign_f != "M" && assign_f != "V") ? !side : side;
                 if (i_f1 == i_fq && i_f2 != undefined && !seen.has(i_f2)) {
                     queue.push([i_f2, queue_side])
                     seen.add(i_f2)
@@ -205,4 +206,79 @@ export const XCUT = {
     },
 
 
+
+    FV_V_2_FF: (FV, V, FOLD) => {
+        return FOLD.FV.map((i_vs_f, i_f_f) => {
+            const vs_f = M.expand(i_vs_f, FOLD.V)
+            const cut_faces = []
+            for (const [i_f_c, i_vs_c] of FV.entries()) {
+                const vs_c = M.expand(i_vs_c, V)
+                const p_c = M.centroid(vs_c)
+                if (M.inside(p_c, vs_f)) {
+                    cut_faces.push(i_f_c)
+                }
+            }
+            if (cut_faces == []) { debugger }
+            return cut_faces
+        })
+    },
+    FF_FOLD_2_egdes: (FF, FOLD) => {
+        const edges = []
+        for (const key of FOLD.edges) {
+            const [f1, f2] = M.decode(key)
+            for (const f1_c of FF[f1]) {
+                for (const f2_c of FF[f2]) {
+                    edges.push(M.encode([f1_c, f2_c]))
+                }
+            }
+        }
+        return edges
+    },
+
+    EAc_2_EAf: (EA, EAf) => {
+        return EA.map(((a, i) => {
+            if (a == "C") {
+                const assign0 = EAf[i]
+                if (assign0 == "M" || assign0 == "V") {
+                    return assign0
+                }
+            }
+            return a
+        }))
+    },
+
+    FF_Ff_Vf_2_FF_Vf: (FF, Ff, Vf) => {
+        let Ff_new = Ff.map(a => a)
+        let Vf_new = Vf.map(a => a)
+        let flip0 = Ff[XCUT.get_f0(FF)]
+        if (flip0) {
+            Ff_new = Ff.map(f => !f)
+            Vf_new = Vf.map(([x, y]) => { return [-x, y] })
+        }
+        return [Ff_new, Vf_new]
+    },
+
+    get_f0: (FF) => {
+        if (FF[0].length == 2) {
+            return FF[0][0]
+        }
+        else {
+            return FF[0]
+        }
+    },
+
+    get_triangle: (V, FV, i_f) => {
+        const q0 = V[FV[i_f][0]]
+        const p = V[FV[i_f][1]]
+        const q1 = V[FV[i_f][2]]
+        return [M.sub[q0, p], M.sub[q1, p]]
+    },
+
+    adas2_rot_flip: (FF, Ff, V, Vf, FV, FOLD) => {
+        const i_f0 = XCUT.get_f0(FF)
+        const [d0, d1] = XCUT.get_triangle(V, FV, i_f0)
+        const [D0, D1] = XCUT.get_triangle(Vf, FV, i_f0)
+
+
+    },
 }
