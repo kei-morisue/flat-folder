@@ -81,9 +81,11 @@ export const SVG = {   // DRAWING
             const p = SVG.append("line", g, { x1, x2, y1, y2 });
             const color = SVG.get_val(options.stroke, i, "black");
             const width = SVG.get_val(options.stroke_width, i, 1);
+            const dash = SVG.get_val(options.stroke_dasharray, i, 0);
             p.setAttribute("stroke", color);
             p.setAttribute("stroke-width", width);
             p.setAttribute("stroke-linecap", "round");
+            p.setAttribute("stroke-dasharray", dash);
             if (options.id != "") {
                 p.setAttribute("id", `${options.id}${i}`);
             }

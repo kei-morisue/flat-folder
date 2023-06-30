@@ -7,6 +7,7 @@ import { GUI } from "./flat_folder/gui.js";
 
 import { CON } from "./flat_folder/constraints.js";
 import { C } from "./cut.js";
+import { XCUT } from "./x_cut.js";
 
 export const CGUI = {
     update_ray: (svg, FOLD, CELL, ray, flip) => {
@@ -26,7 +27,8 @@ export const CGUI = {
         const svg = document.getElementById("flat_cut")
         const svg_fold_cut = document.getElementById("fold_cut")
         CGUI.update_flat(svg, CUT)
-        CGUI.update_fold(svg_fold_cut, CUT, CELL, false)
+        const flip = document.getElementById("flipfold_ray").checked
+        CGUI.update_fold(svg_fold_cut, CUT, CELL, flip)
     },
     update_flat: (svg, CUT) => {
         const Fs = CUT.Fs
@@ -55,12 +57,21 @@ export const CGUI = {
             filter: (i) => CUT.EA[i] != "C"
         });
 
-        SVG.draw_segments(svg, creases, {
-            id: "fold_s_crease",
-            stroke: CUT.EA.map(p => "magenta"),
-            stroke_width: 10,
-            filter: (i) => CUT.EA[i] == "C"
-        });
+        //stub pure folding cp
+        const side = true
+        groups.map(g => {
+            const CMV = CUT.GE[g]
+            const CMVA0 = XCUT.CMV_2_CMVA0(CMV, CUT.EA, CUT.Ff, CUT.EA0, side)
+            const segs = CMV.C.map(([i_e, i_f]) => M.expand(CUT.EV[i_e], CUT.V))
+            SVG.draw_segments(svg, segs, {
+                id: "fold_c_crease",
+                stroke: CMVA0.C.map(a => a == "M" ? "red" : "blue"),
+                stroke_width: 5,
+                stroke_dasharray: "2,10,4"
+            });
+        }
+        )
+
     },
 
     update_fold: (svg, CUT, CELL, flip) => {
@@ -75,9 +86,11 @@ export const CGUI = {
         const cells = CP.map(V => M.expand(V, Q));
         const colors = tops.map(d => {
             if (d == undefined) { return undefined; }
-            if (groups.includes(FG[d])) { return "lightgray" }
-            if (Ff[d] != flip) { return GUI.COLORS.face.top; }
-            else { return GUI.COLORS.face.bottom; }
+            const cut = groups.includes(FG[d])
+            if (Ff[d] != flip) {
+                return cut ? "darkgray" : GUI.COLORS.face.top;
+            }
+            else { return cut ? "lightgray" : GUI.COLORS.face.bottom; }
         });
         SVG.draw_polygons(svg, cells, {
             id: "fold_c", fill: colors, stroke: colors

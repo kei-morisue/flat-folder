@@ -72,6 +72,11 @@ export const SB = {
         const edges = D.GI_2_DIST(FOLD, BF, GB, GA)
         FOLD.edges = edges
         //cutting
+        const box = document.getElementById("flipfold_ray");
+        box.onchange = () => {
+            const CC = C.cut(FOLD, CELL)
+            CGUI.update_cut(CC.CUT, CC.CELL)
+        }
         const CC = C.cut(FOLD, CELL)
         CGUI.update_cut(CC.CUT, CC.CELL)
     },

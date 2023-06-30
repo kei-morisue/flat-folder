@@ -11,6 +11,7 @@ import { GUI } from "./flat_folder/gui.js";
 import { M } from "./flat_folder/math.js";
 
 import { SVG } from "./flat_folder/svg.js";
+import { CGUI } from "./c_gui.js";
 
 
 export const XCUT = {
@@ -176,7 +177,7 @@ export const XCUT = {
     },
 
     CUT_FOLD_2_EAnew: (EF, EA, FG, FOLD) => {
-        const EA_c = FOLD.EA
+        const EA_orig = FOLD.EA
         const EA_new = EA.map(v => v)
         for (const [i_e, [i_f0, i_f1]] of EF.entries()) {
             const assign = EA[i_e]
@@ -189,7 +190,7 @@ export const XCUT = {
             if (g0 != g1) {
                 continue
             }
-            const assign0 = EA_c[i_e]
+            const assign0 = EA_orig[i_e]
             if (assign0 == undefined) { debugger }
             EA_new[i_e] = assign0
         }
@@ -247,7 +248,7 @@ export const XCUT = {
         }))
     },
 
-    FF_Ff_Vf_2_FF_Vf: (FF, Ff, Vf) => {
+    FF_Ff_Vf_2_Ff_Vf: (FF, Ff, Vf) => {
         let Ff_new = Ff.map(a => a)
         let Vf_new = Vf.map(a => a)
         let flip0 = Ff[XCUT.get_f0(FF)]
@@ -267,18 +268,71 @@ export const XCUT = {
         }
     },
 
-    get_triangle: (V, FV, i_f) => {
-        const q0 = V[FV[i_f][0]]
-        const p = V[FV[i_f][1]]
-        const q1 = V[FV[i_f][2]]
-        return [M.sub[q0, p], M.sub[q1, p]]
+
+    FG_2_GF: (FG) => {
+        let GF = []
+        for (const [i_f, g] of FG.entries()) {
+            if (GF[g] == undefined) {
+                GF.push([i_f])
+            }
+            else {
+                GF[g].push(i_f)
+            }
+        }
+        return GF
+
     },
 
-    adas2_rot_flip: (FF, Ff, V, Vf, FV, FOLD) => {
-        const i_f0 = XCUT.get_f0(FF)
-        const [d0, d1] = XCUT.get_triangle(V, FV, i_f0)
-        const [D0, D1] = XCUT.get_triangle(Vf, FV, i_f0)
+    GF_FE_EA_2_GE: (GF, FE, EA) => {
+        return GF.map(i_fs => {
+            const i_cs_x = []
+            const i_ms_x = new Set()
+            const i_vs_x = new Set()
+            for (const i_f of i_fs) {
+                const i_es = FE[i_f]
+                for (const i_e of i_es) {
+                    const a = EA[i_e]
+                    if (a == "C") {
+                        i_cs_x.push([i_e, i_f])
+                        continue
+                    }
+                    if (a == "M") {
+                        i_ms_x.add(i_e)
+                        continue
+                    }
+                    if (a == "V") {
+                        i_vs_x.add(i_e)
+                        continue
+                    }
+                }
+            }
+            const M = Array.from(i_ms_x)
+            const V = Array.from(i_vs_x)
+            return { C: i_cs_x, M, V }
 
+        })
 
     },
+
+    //0:pure fold
+    //side: true:valley on top side
+    CMV_2_CMVA0: (CMV, EA, Ff, EA0, side) => {
+        const { C, M, V } = CMV
+        const CA = C.map(([i_e, i_f]) => {
+            const assign0 = EA0[i_e]
+            if (assign0 == "B") {
+                return "B"
+            }
+            if (assign0 == "M" || assign0 == "V")
+                return "F"
+            const isflip = Ff[i_f]
+            return isflip ^ side ? "M" : "V"
+
+        })
+        const MA = M.map(i_e => EA[i_e])
+        const VA = V.map(i_e => EA[i_e])
+        return { C: CA, M: MA, V: VA }
+
+    },
+
 }

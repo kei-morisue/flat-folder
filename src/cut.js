@@ -28,7 +28,9 @@ export const C = {
         const svg_fold_cut = document.getElementById("fold_cut")
 
         // rendering
-        CGUI.update_ray(svg_ray, FOLD, CELL, ray, false)
+        const box = document.getElementById("flipfold_ray");
+        const flip = box.checked
+        CGUI.update_ray(svg_ray, FOLD, CELL, ray, flip)
 
 
         // building CUT
@@ -42,6 +44,7 @@ export const C = {
     },
 
     FOLD_2_CUT: (FOLD, ray) => {
+        const EA0 = FOLD.EA
         const L = XCUT.FOLD_ray_2_L(FOLD, ray)
         const [V, EV, EL] = X.L_2_V_EV_EL(L, FOLD.eps);
         const V_norm = M.normalize_points(V)
@@ -50,20 +53,28 @@ export const C = {
         const FF = XCUT.FV_V_2_FF(FV, V_norm, FOLD)
         const [EF, FE] = X.EV_FV_2_EF_FE(EV, FV);
         let [VK, Vf, Ff, Vf_norm] = X.V_VV_EV_EA_2_f(V, VV, EV,
-            XCUT.EAc_2_EAf(EA, FOLD.EA),
+            XCUT.EAc_2_EAf(EA, EA0),
             FV)
-        //Adjusting folded informatons
-        const [Ff_new, Vf_new] = XCUT.FF_Ff_Vf_2_FF_Vf(FF, Ff, Vf_norm)
+        //aligning base faces
+        const [Ff_new, Vf_new] = XCUT.FF_Ff_Vf_2_Ff_Vf(FF, Ff, Vf_norm)
         //grouping the faces
         const FG = XCUT.FV_EA_FE_EF_2_FG(FV, EA, FE, EF)
+        const GF = XCUT.FG_2_GF(FG)
         //trimming unnnecessary cut
         const EA_trim = XCUT.CUT_FOLD_2_EAnew(EF, EA, FG, FOLD)
+
+        //determining group sides
         const Fs = XCUT.EF_EA_FG_FE_2_Fs(EF, EA_trim, FG, FE, FOLD)
         const sG = XCUT.Fs_FG_2_sG(Fs, FG)
+        const GE = XCUT.GF_FE_EA_2_GE(GF, FE, EA_trim)
+
+
+        //for inferring face orders from original FOLD
         const edges = XCUT.FF_FOLD_2_egdes(FF, FOLD)
         return {
+            EA0,
             V: V_norm, EV, EA: EA_trim, EF, FV, FE, VK, Vf: Vf_new, Ff: Ff_new,
-            FG, Fs, sG, edges
+            FG, GF, GE, Fs, sG, edges
         }
     },
 

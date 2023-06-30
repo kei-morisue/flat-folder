@@ -39,7 +39,7 @@ export const CTRL = {
             el.textContent = k;
             sel.appendChild(el);
         }
-        sel.value = "testcp"
+        sel.value = "testcp3"
         sel.onchange = (e) => {
             SB.sandbox()
         };
