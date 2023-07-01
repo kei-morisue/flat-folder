@@ -8,6 +8,7 @@ import { GUI } from "./flat_folder/gui.js";
 import { CON } from "./flat_folder/constraints.js";
 import { C } from "./cut.js";
 import { XCUT } from "./x_cut.js";
+import { OP } from "./operation.js";
 
 export const CGUI = {
     update_ray: (svg, FOLD, CELL, ray, flip) => {
@@ -34,7 +35,7 @@ export const CGUI = {
         const Fs = CUT.Fs
         const FG = CUT.FG
         SVG.clear_element(svg)
-        let groups = CGUI.get_groups(CUT);
+        let [groups, ops] = CGUI.get_groups(CUT);
         //rendering the flat cut
         const faces = CUT.FV.map((i_vs) => {
             return M.expand(i_vs, CUT.V)
@@ -45,37 +46,34 @@ export const CGUI = {
         SVG.draw_polygons(svg, faces, {
             id: "fold_cut_f", fill: colors, stroke: colors
         });
-        //draw creases
+
+
+
         const creases = CUT.EV.map((ps) => M.expand(ps, CUT.V));
-        const stroke = CUT.EA.map((a) => {
-            return GUI.COLORS.edge[a]
+
+        const EO = OP.GE_2_EO(groups, ops, CUT)
+        const EA = OP.EO_EA0_2_EA(CUT.EA, CUT.EA0, EO)
+        const stroke = EA.map((a) => {
+            return CGUI.COLORS[a]
+        })
+        const dashes = EA.map((a) => {
+            return CGUI.DASHES[a]
         })
         SVG.draw_segments(svg, creases, {
             id: "fold_s_crease",
             stroke: stroke,
-            stroke_width: GUI.WIDTH.creases,
-            filter: (i) => CUT.EA[i] != "C"
+            stroke_width: 3,
+            stroke_dasharray: dashes
         });
 
-        //stub pure folding cp
-        const side = true
-        groups.map(g => {
-            const CMV = CUT.GE[g]
-            const CMVA0 = XCUT.CMV_2_CMVA0(CMV, CUT.EA, CUT.Ff, CUT.EA0, side)
-            const segs = CMV.C.map(([i_e, i_f]) => M.expand(CUT.EV[i_e], CUT.V))
-            SVG.draw_segments(svg, segs, {
-                id: "fold_c_crease",
-                stroke: CMVA0.C.map(a => a == "M" ? "red" : "blue"),
-                stroke_width: 5,
-                stroke_dasharray: "2,10,4"
-            });
-        }
-        )
+
 
     },
 
+    COLORS: { M: "blue", V: "red", B: "black", MC: "blue", VC: "red", FC: "green" },
+    DASHES: { M: 0, V: 0, B: 0, MC: "10,10", VC: "20,20", FC: "20,10" },
     update_fold: (svg, CUT, CELL, flip) => {
-        const groups = CGUI.get_groups(CUT);
+        const groups = CGUI.get_groups(CUT)[0];
         SVG.clear_element(svg)
         const { EF, Ff, FG } = CUT;
         const { P_norm, SP, SE, CP, SC, CF, CD } = CELL;
@@ -98,7 +96,7 @@ export const CGUI = {
         const lines = SP.map((ps) => M.expand(ps, Q));
         SVG.draw_segments(svg, lines, {
             id: "fold_s_crease", stroke: "magenta",
-            stroke_width: GUI.WIDTH.CREASE,
+            stroke_width: 5,
             filter: (i) => SD[i] == "C"
         });
         SVG.draw_segments(svg, lines, {
@@ -108,23 +106,50 @@ export const CGUI = {
         });
     },
 
+    create_operation_select: (k) => {
+        const form = document.createElement("form")
+        const name = "cutoption" + k
+        form.setAttribute("id", name)
+        for (const [i, o] of OP.CUTOPS.entries()) {
+            const id = name + o
+            const box = document.createElement("input");
+            box.setAttribute("type", "radio");
+            box.setAttribute("id", id);
+            box.setAttribute("name", name);
+            box.setAttribute("value", o);
+            if (i == 0 || k == 0 && i == 1) {
+                box.checked = true
+            }
+            const label = document.createElement("label");
+            label.textContent = o;
+            label.setAttribute("for", id);
+            form.appendChild(label)
+            form.appendChild(box)
+        }
+        return form
+
+    },
+
+    create_cutselect: (k) => {
+        const num = document.createElement("label");
+        num.setAttribute("for", "cutoption" + k);
+        num.textContent = k + ": ";
+        const div = document.createElement("div")
+        div.appendChild(num)
+        div.setAttribute("class", "operations")
+        const form = CGUI.create_operation_select(k)
+        div.appendChild(form)
+        return div
+    },
+
     update_cut_select: (CUT, CELL) => {
         const sG = CUT.sG
         const sel = document.getElementById("cutselect")
         const side = document.getElementById("cutside")
         SVG.clear_element(sel)
         for (const k in sG[side.value == "+" ? 1 : 0]) {
-            const box = document.createElement("input");
-            box.setAttribute("type", "checkbox");
-            box.setAttribute("id", "cutoption" + k);
-            const num = document.createElement("label");
-            num.setAttribute("for", "cutoption" + k);
-            num.textContent = k;
-            sel.appendChild(num);
-            sel.appendChild(box);
-            if (k == 0) {
-                box.checked = true
-            }
+            sel.append(CGUI.create_cutselect(k))
+
         }
         sel.onchange = (e) => {
             CGUI.update_ff(CUT, CELL)
@@ -139,15 +164,18 @@ export const CGUI = {
     get_groups: (CUT) => {
         const side = document.getElementById("cutside").value == "+";
         let groups = [];
+        let ops = []
         const G = CUT.sG[side ? 1 : 0];
         for (const k in G) {
-            const opt = document.getElementById("cutoption" + k).checked;
-            if (opt) {
+            const form = document.getElementById("cutoption" + k)
+            const op = form.elements["cutoption" + k].value
+            if (op != "none") {
                 groups.push(G[k]);
+                ops.push(OP.CUTOPS.indexOf(op))
             }
 
         }
-        return groups;
+        return [groups, ops];
     },
 
 }

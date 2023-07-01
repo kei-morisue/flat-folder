@@ -1,3 +1,14 @@
 .svg-area {
     width: 100%;
 }
+
+.cutselect {
+    display: flex;
+    flex-direction: column;
+}
+
+.operations {
+    display: flex;
+    flex-direction: row;
+    justify-content: left
+}

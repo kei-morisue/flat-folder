@@ -67,30 +67,32 @@ export const XCUT = {
             if (v == undefined) {
                 continue
             }
-            L_c.push([v[0][0], v[1][0], "C"])
+            L_c.push([v[0][0], v[1][0], "C", "C"])
         }
 
         const L_f = EV.map(([i_v1, i_v2], i_e) => {
-            return [V[i_v1], V[i_v2], EA[i_e]];
+            return [V[i_v1], V[i_v2], EA[i_e], EA[i_e]];
         });
 
-        return XCUT.marge_Lcut_2_Lfold(L_c, L_f, eps)
+        return XCUT.marge_Lcut_2_Lfold(L_c, L_f, eps, EA)
     },
 
 
 
-    marge_Lcut_2_Lfold: (Lc, Lf, eps) => {
+    marge_Lcut_2_Lfold: (Lc, L0, eps, EA0) => {
         const epssq = eps * eps
         for (const [i_c, lc] of Lc.entries()) {
             const p1 = lc[0]
             const q1 = lc[1]
             let found = false
-            for (const [i_f, lf] of Lf.entries()) {
-                const p2 = lf[0]
-                const q2 = lf[1]
+            for (const [i_l0, l0] of L0.entries()) {
+                const p2 = l0[0]
+                const q2 = l0[1]
                 if (M.distsq(p1, p2) < epssq && M.distsq(q1, q2) < epssq ||
                     M.distsq(p1, q2) < epssq && M.distsq(q1, p2) < epssq) {
-                    lf[2] = "C"
+                    if (EA0[i_l0] != "B") {
+                        l0[2] = "C"
+                    }
                     found = true
                     break
                 }
@@ -98,11 +100,12 @@ export const XCUT = {
             if (found) {
                 continue
             }
-            Lf.push(lc)
+            L0.push(lc)
         }
-        return Lf
+        return L0
 
     },
+
 
     FV_EA_FE_EF_2_FG: (FV, EA, FE, EF) => {
         const seen = new Set();
@@ -144,7 +147,7 @@ export const XCUT = {
     },
 
 
-    EF_EA_FG_FE_2_Fs: (EF, EA, FG, FE, FOLD) => {
+    EF_EC_FG_FE_2_Fs: (EF, EA, FG, FE, FOLD) => {
         const Fs = new Array(FG.length);
 
         const seen = new Set();
@@ -176,9 +179,8 @@ export const XCUT = {
         return Fs;
     },
 
-    CUT_FOLD_2_EAnew: (EF, EA, FG, FOLD) => {
-        const EA_orig = FOLD.EA
-        const EA_new = EA.map(v => v)
+    EF_EA_FG_EA0_2_EC: (EF, EA, FG, EA0) => {
+        const EC = EA.map(v => v)
         for (const [i_e, [i_f0, i_f1]] of EF.entries()) {
             const assign = EA[i_e]
             if (assign != "C") {
@@ -186,15 +188,12 @@ export const XCUT = {
             }
             const g0 = FG[i_f0]
             const g1 = FG[i_f1]
-
             if (g0 != g1) {
                 continue
             }
-            const assign0 = EA_orig[i_e]
-            if (assign0 == undefined) { debugger }
-            EA_new[i_e] = assign0
+            EC[i_e] = EA0[i_e]
         }
-        return EA_new
+        return EC
     },
     Fs_FG_2_sG: (Fs, FG) => {
         const G0 = new Set()
@@ -236,17 +235,6 @@ export const XCUT = {
         return edges
     },
 
-    EAc_2_EAf: (EA, EAf) => {
-        return EA.map(((a, i) => {
-            if (a == "C") {
-                const assign0 = EAf[i]
-                if (assign0 == "M" || assign0 == "V") {
-                    return assign0
-                }
-            }
-            return a
-        }))
-    },
 
     FF_Ff_Vf_2_Ff_Vf: (FF, Ff, Vf) => {
         let Ff_new = Ff.map(a => a)
@@ -283,56 +271,20 @@ export const XCUT = {
 
     },
 
-    GF_FE_EA_2_GE: (GF, FE, EA) => {
+    GF_FE_2_GE: (GF, FE) => {
         return GF.map(i_fs => {
-            const i_cs_x = []
-            const i_ms_x = new Set()
-            const i_vs_x = new Set()
+            const i_es_c = new Set()
             for (const i_f of i_fs) {
                 const i_es = FE[i_f]
                 for (const i_e of i_es) {
-                    const a = EA[i_e]
-                    if (a == "C") {
-                        i_cs_x.push([i_e, i_f])
-                        continue
-                    }
-                    if (a == "M") {
-                        i_ms_x.add(i_e)
-                        continue
-                    }
-                    if (a == "V") {
-                        i_vs_x.add(i_e)
-                        continue
-                    }
+                    i_es_c.add(i_e)
                 }
             }
-            const M = Array.from(i_ms_x)
-            const V = Array.from(i_vs_x)
-            return { C: i_cs_x, M, V }
-
+            return Array.from(i_es_c)
         })
 
     },
 
-    //0:pure fold
-    //side: true:valley on top side
-    CMV_2_CMVA0: (CMV, EA, Ff, EA0, side) => {
-        const { C, M, V } = CMV
-        const CA = C.map(([i_e, i_f]) => {
-            const assign0 = EA0[i_e]
-            if (assign0 == "B") {
-                return "B"
-            }
-            if (assign0 == "M" || assign0 == "V")
-                return "F"
-            const isflip = Ff[i_f]
-            return isflip ^ side ? "M" : "V"
 
-        })
-        const MA = M.map(i_e => EA[i_e])
-        const VA = V.map(i_e => EA[i_e])
-        return { C: CA, M: MA, V: VA }
-
-    },
 
 }
