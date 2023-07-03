@@ -614,8 +614,11 @@ export const X = {     // CONVERSION
             return "B";
         });
     },
-    V_EV_EA_2_FOLD: (V, EV, EA) => {
-        [VV, FV] = X.V_EV_2_VV_FV(V, EV)
+    L_2_FOLD: (L) => {
+        const eps = M.min_line_length(L) / M.EPS
+        let [V, EV, EL] = X.L_2_V_EV_EL(L, eps);
+        const EA = EL.map(l => L[l[0]][2]);
+        const [VV, FV] = X.V_EV_2_VV_FV(V, EV)
         V = M.normalize_points(V);
         const [EF, FE] = X.EV_FV_2_EF_FE(EV, FV);
         const [VK, Vf, Ff, Vf_norm] = X.V_VV_EV_EA_2_f(V, VV, EV, EA, FV)

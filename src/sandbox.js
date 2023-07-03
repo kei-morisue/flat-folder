@@ -5,6 +5,8 @@ import { D } from "./distortion.js";
 import { CP } from "./cp.js";
 import { X } from "./flat_folder/conversion.js";
 import { M } from "./flat_folder/math.js";
+import { GUI } from "./flat_folder/gui.js";
+
 import { C } from "./cut.js";
 import { CGUI } from "./c_gui.js";
 import { CTRL } from "./control.js";
@@ -13,39 +15,18 @@ import { CTRL } from "./control.js";
 
 export const SB = {
     initialize_sliders: (FOLD, BF, GB, GA) => {
-        const event_type = "input"
         const sliders = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById("slider" + i));
         const handler = () => {
             D.GI_2_DIST(FOLD, BF, GB, GA)
         }
-        for (const slider_template of sliders) {
-            const base_name = slider_template.getAttribute("id")
-            const old_slider = document.getElementById(base_name + "instance")
-            const old_reset = document.getElementById(base_name + "reset")
-            if (old_slider != undefined) {
-                old_slider.remove()
-                old_reset.remove()
-            }
-
-
-            const slider = slider_template.cloneNode(false)
-            slider.setAttribute("id", base_name + "instance")
+        for (const slider of sliders) {
+            const base_name = slider.getAttribute("id")
             slider.oninput = handler
-
-
-            const resetbutton = document.createElement("button")
-            resetbutton.setAttribute("id", base_name + "reset")
-            resetbutton.innerHTML = "reset"
-            const ini = slider_template.value
+            const resetbutton = document.getElementById(base_name + "reset")
             resetbutton.onclick = (e) => {
-                slider.value = ini
-                slider.dispatchEvent(new Event(event_type))
+                slider.value = 0.5
+                slider.dispatchEvent(new Event("input"))
             }
-            const node = slider_template.parentNode
-            node.appendChild(slider)
-            node.prepend(resetbutton)
-            slider.style.display = "inline"
-            slider_template.style.display = "none"
         }
     },
 
@@ -79,6 +60,7 @@ export const SB = {
         }
         const CC = C.cut(FOLD, CELL)
         CGUI.update_cut(CC.CUT, CC.CELL)
+
     },
 
 }

@@ -76,20 +76,24 @@
     <span style="display: flex;">
         <b>Distortion Parameters A0</b>
         <div>
-            <label>rotation</label>
+            <label for="slider0">rotation</label>
             <input id="slider0" type="range" value="0.5" min="0" max="1" step="0.00001" />
+            <button id="slider0reset">reset</button>
         </div>
         <div>
             <label>scale1</label>
             <input id="slider1" type="range" value="0.5" min="0" max="1" step="0.00001" />
+            <button id="slider1reset">reset</button>
         </div>
         <div>
             <label>scale2</label>
             <input id="slider2" type="range" value="0.5" min="0" max="1" step="0.00001" />
+            <button id="slider2reset">reset</button>
         </div>
         <div>
             <label>scale direction</label>
-            <input id="slider3" type="range" value="0" min="0" max="1" step="0.00001" />
+            <input id="slider3" type="range" value="0.5" min="0" max="1" step="0.00001" />
+            <button id="slider3reset">reset</button>
         </div>
 
     </span>
@@ -108,15 +112,20 @@
         <div>
             <label>angle</label>
             <input id="slider4" type="range" value="0.5" min="0" max="2" step="0.0001" />
+            <button id="slider4reset">reset</button>
         </div>
         <div>
             <label>X-spin</label>
             <input id="slider5" type="range" value="0" min="0" max="1" step="0.0001" />
+            <button id="slider5reset">reset</button>
         </div>
     </div>
 
 
-
+    <div>
+        <div id="model" class="svg-area">
+        </div>
+    </div>
     <div>
         <textarea id="console" rows=10 readonly style="width:100%;background-color:darkgray;resize:none;
         font-family:monospace"></textarea>

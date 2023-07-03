@@ -11,8 +11,9 @@ export const CTRL = {
         CTRL.initialize_import()
         CTRL.initialize_limit()
         CTRL.initialize_side()
-        SB.sandbox()
     },
+
+
     set_flip_check_box: (id, svg, FOLD, CELL) => {
         const handler = () => {
             const id = svg.getAttribute("id")
@@ -28,7 +29,8 @@ export const CTRL = {
             ["flat_dist", "cell_dist", "fold_dist", "fold"])
         GUI.initiate_canvas(
             document.getElementById("cutting"),
-            ["fold_ray", "flat_cut", "fold_cut"])
+            ["fold_ray", "flat_cut", "fold_cut", "fold_cut2"])
+
     },
 
     initialize_cp_select: () => {
@@ -39,7 +41,7 @@ export const CTRL = {
             el.textContent = k;
             sel.appendChild(el);
         }
-        sel.value = "testcp2"
+        sel.value = "testcp"
         sel.onchange = (e) => {
             SB.sandbox()
         };

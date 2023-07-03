@@ -28,7 +28,7 @@ export const SVG = {   // DRAWING
         if (Array.isArray(val)) { return val[i]; }
         return val;
     },
-    draw_canvas: ($el, [x, y, w, h], viewBox, color) => {
+    draw_canvas: (par, [x, y, w, h], vb, color) => {
         const attrs = {
             xmlns: SVG.NS,
             style: `background: ${color}`,
@@ -36,17 +36,17 @@ export const SVG = {   // DRAWING
             width: w,
             x: x,
             y: y,
-            viewBox: viewBox.join(" ")
+            viewBox: vb.join(" ")
         }
-        return SVG.append("svg", $el, attrs)
+        return SVG.append("svg", par, attrs)
     },
-    draw_viewbox: ($el, viewBox, color) => {
+    draw_viewbox: (par, vb, color) => {
         const attrs = {
             xmlns: SVG.NS,
             style: `background: ${color}`,
-            viewBox: viewBox.join(" ")
+            viewBox: vb.join(" ")
         }
-        return SVG.append("svg", $el, attrs)
+        return SVG.append("svg", par, attrs)
     },
 
     draw_point: (svg, [x, y], color, r) => {

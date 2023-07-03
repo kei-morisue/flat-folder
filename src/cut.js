@@ -59,13 +59,14 @@ export const C = {
 
         //aligning base faces
         const FF = XCUT.FV_V_2_FF(FV, V_norm, FOLD)
-        const [Ff_new, Vf_new] = XCUT.FF_Ff_Vf_2_Ff_Vf(FF, Ff, Vf_norm)
+        const [Ff_new, Vf_new] = XCUT.FF_Ff_Vf_2_Ff_Vf(FF, Ff, Vf_norm, FOLD)
         //for inferring face orders from original FOLD
         const edges = XCUT.FF_FOLD_2_egdes(FF, FOLD)
 
         return {
             EA0,
-            V: V_norm, EV, EA: EC, EF, FV, FE, VK, Vf: Vf_new, Ff: Ff_new,
+            V: V_norm, EV, EA: EC, EF, FV, FE, VK,
+            Vf: Vf_new, Ff: Ff_new, Vf_norm: Vf_new,
             FG, GF, GE, Fs, sG, edges
         }
     },

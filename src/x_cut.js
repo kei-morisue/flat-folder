@@ -236,25 +236,18 @@ export const XCUT = {
     },
 
 
-    FF_Ff_Vf_2_Ff_Vf: (FF, Ff, Vf) => {
+    FF_Ff_Vf_2_Ff_Vf: (FF, Ff, Vf, FOLD) => {
         let Ff_new = Ff.map(a => a)
         let Vf_new = Vf.map(a => a)
-        let flip0 = Ff[XCUT.get_f0(FF)]
-        if (flip0) {
+        let flip0 = Ff[FF[0][0]]
+        if (flip0 != FOLD.Ff[0]) {
             Ff_new = Ff.map(f => !f)
             Vf_new = Vf.map(([x, y]) => { return [-x, y] })
         }
         return [Ff_new, Vf_new]
     },
 
-    get_f0: (FF) => {
-        if (FF[0].length == 2) {
-            return FF[0][0]
-        }
-        else {
-            return FF[0]
-        }
-    },
+
 
 
     FG_2_GF: (FG) => {

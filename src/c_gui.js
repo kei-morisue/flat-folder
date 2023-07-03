@@ -27,9 +27,16 @@ export const CGUI = {
     update_ff: (CUT, CELL) => {
         const svg = document.getElementById("flat_cut")
         const svg_fold_cut = document.getElementById("fold_cut")
-        CGUI.update_flat(svg, CUT)
+        const svg_fold_cut2 = document.getElementById("fold_cut2")
+        const EA = CGUI.update_flat(svg, CUT)
+        const [F, C] = OP.EA_2_OPNG(EA, CUT.V, CUT.EV, CUT)
         const flip = document.getElementById("flipfold_ray").checked
-        CGUI.update_fold(svg_fold_cut, CUT, CELL, flip)
+        CGUI.update_fold(F.EA, svg_fold_cut, F, C, flip)
+        // CUT.EA = EA
+        CGUI.update_fold(EA, svg_fold_cut2, CUT, CELL, flip)
+
+        // GUI.update_flat(svg_fold_cut, F)
+
     },
     update_flat: (svg, CUT) => {
         const Fs = CUT.Fs
@@ -66,16 +73,15 @@ export const CGUI = {
             stroke_dasharray: dashes
         });
 
-
+        return EA
 
     },
 
     COLORS: { M: "blue", V: "red", B: "black", MC: "blue", VC: "red", FC: "green" },
     DASHES: { M: 0, V: 0, B: 0, MC: "10,10", VC: "20,20", FC: "20,10" },
-    update_fold: (svg, CUT, CELL, flip) => {
-        const groups = CGUI.get_groups(CUT)[0];
+    update_fold: (EA, svg, FOLD, CELL, flip) => {
         SVG.clear_element(svg)
-        const { EF, Ff, FG } = CUT;
+        const { EF, Ff, FG } = FOLD;
         const { P_norm, SP, SE, CP, SC, CF, CD } = CELL;
         const tops = CD.map(S => flip ? S[0] : S[S.length - 1]);
         const SD = X.EF_SE_SC_CF_CD_2_SD(EF, SE, SC, CF, tops);
@@ -84,25 +90,49 @@ export const CGUI = {
         const cells = CP.map(V => M.expand(V, Q));
         const colors = tops.map(d => {
             if (d == undefined) { return undefined; }
-            const cut = groups.includes(FG[d])
-            if (Ff[d] != flip) {
-                return cut ? "darkgray" : GUI.COLORS.face.top;
-            }
-            else { return cut ? "lightgray" : GUI.COLORS.face.bottom; }
+            if (Ff[d] != flip) { return GUI.COLORS.face.top; }
+            else { return GUI.COLORS.face.bottom; }
         });
         SVG.draw_polygons(svg, cells, {
             id: "fold_c", fill: colors, stroke: colors
         });
         const lines = SP.map((ps) => M.expand(ps, Q));
         SVG.draw_segments(svg, lines, {
-            id: "fold_s_crease", stroke: "magenta",
-            stroke_width: 5,
-            filter: (i) => SD[i] == "C"
-        });
-        SVG.draw_segments(svg, lines, {
             id: "fold_s_edge", stroke: GUI.COLORS.edge.B,
             stroke_width: GUI.WIDTH.BOLD,
             filter: (i) => SD[i] == "B"
+        });
+
+
+        let creases = []
+        let cols = []
+        let dashes = []
+        for (const [i_e, a] of EA.entries()) {
+            if (a == "MC" || a == "VC" || a == "FC") {
+                for (const [i_s, i_es] of CELL.SE.entries()) {
+                    if (SD[i_s] != "C") { continue }
+                    if (!i_es.includes(i_e)) { continue }
+                    const [i_p1, i_p2] = SP[i_s]
+                    creases.push([Q[i_p1], Q[i_p2]])
+                    const [i_f1, i_f2] = FOLD.EF[i_e]
+                    let flip = false
+                    const b = a == "MC" ? "VC" : a == "VC" ? "MC" : "FC"
+                    let c = undefined
+                    if (FOLD.Ff[i_f1] == FOLD.Ff[i_f2]) {
+                        c = FOLD.Ff[i_f1] ? b : a
+                    }
+                    else { c = b }
+
+                    cols.push(CGUI.COLORS[c])
+                    dashes.push(CGUI.DASHES[c])
+                }
+            }
+        }
+        SVG.draw_segments(svg, creases, {
+            id: "fold_s_edge",
+            stroke: cols,
+            stroke_width: GUI.WIDTH.BOLD,
+            stroke_dasharray: dashes
         });
     },
 

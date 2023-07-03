@@ -57,7 +57,7 @@ export const D = {
     },
 
     get_parameters: (range = 0.1) => {
-        const sliders = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById("slider" + i + "instance"));
+        const sliders = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById("slider" + i));
         const vs = sliders.map((s) => s.value * Math.PI)
         const X_input = D.X(vs[4], Math.cos(vs[5]), 1, 0)
         const A0_input = D.A0(vs[0], vs[1], vs[2], vs[3], range)

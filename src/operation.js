@@ -7,6 +7,8 @@ import { D } from "./distortion.js";
 import { CP } from "./cp.js";
 import { X } from "./flat_folder/conversion.js";
 import { GUI } from "./flat_folder/gui.js";
+import { M } from "./flat_folder/math.js";
+
 import { CGUI } from "./c_gui.js";
 
 
@@ -25,6 +27,41 @@ export const OP = {
         i_s_stay = i_s_flip == 1 ? 0 : 1
 
     },
+
+    EA_2_OPNG: (EA, V, EV, CUT) => {
+        const L = EA.map((a, i_e) => {
+            let assign = a
+            if (a == "FC") {
+                assign = "F"
+            }
+            if (a == "MC") {
+                assign = "M"
+            }
+            if (a == "VC") {
+                assign = "V"
+            }
+            return [V[EV[i_e][0]], V[EV[i_e][1]], assign]
+        })
+        const FOLD = X.L_2_FOLD(L)
+        const FF = XCUT.FV_V_2_FF(FOLD.FV, FOLD.V, CUT)
+        const [Ff_new, Vf_new] = XCUT.FF_Ff_Vf_2_Ff_Vf(FF, FOLD.Ff, FOLD.Vf_norm, CUT)
+        FOLD.Ff = Ff_new
+        FOLD.Vf = Vf_new
+        FOLD.Vf_norm = Vf_new
+        const CELL = X.FOLD_2_CELL(FOLD)
+        const [BF, BT] = X.FOLD_CELL_2_BF_BT(FOLD, CELL)
+        const sol = X.FOLD_BF_BT_2_sol(FOLD, BF, BT, Infinity)
+        if (sol.length == 3) {
+            debugger
+            return [FOLD, CELL]
+        }
+        const [GB, GA] = sol
+        const GI = GB.map(() => 0)
+        const edges = X.BF_GB_GA_GI_2_edges(BF, GB, GA, GI)
+        CELL.CD = X.CF_edges_flip_2_CD(CELL.CF, edges)
+        return [FOLD, CELL]
+    },
+
     ASGN: { M: -1, V: 1, C: 0 },
     EO_EA0_2_EA: (EC, EA0, EO) => {
         return EC.map((a, i_e) => {

@@ -1,5 +1,4 @@
 import { M } from "./math.js";
-import { NOTE } from "./note.js";
 import { CON } from "./constraints.js";
 
 export const SOLVER = {    // STATE SOLVER
@@ -71,7 +70,6 @@ export const SOLVER = {    // STATE SOLVER
     get_components: (BI, BF, BT, BA, B0) => {
         const GB = [];
         const seen = new Set();
-        NOTE.start_check("variable", BF);
         for (const [bi, a] of BA.entries()) {
             if (!seen.has(bi) && (a == 0)) {
                 const stack = [bi]; // DS for connected component
@@ -93,7 +91,6 @@ export const SOLVER = {    // STATE SOLVER
                                     stack.push(bi__);
                                     seen.add(bi__);
                                 }
-                                NOTE.check(seen.size);
                             }
                         }
                     }
@@ -119,9 +116,9 @@ export const SOLVER = {    // STATE SOLVER
         const sol = G.map(() => 0);
         let idx = 0;
         let backtracking = false;
-        NOTE.start_check("state"); // at start of loop, idx is an index of G
+        // at start of loop, idx is an index of G
         while (true) {             // if backtracking, idx after the last guess
-            NOTE.check(A.length);  //            else, idx to guess next
+            //            else, idx to guess next
             for (let i = 0; i < idx; ++i) { if (BA[G[i]] == 0) { debugger; } }
             if (backtracking) {
                 if (guesses.length == 0) {
@@ -190,7 +187,6 @@ export const SOLVER = {    // STATE SOLVER
         for (const [i, F] of BF.entries()) {
             BI.set(F, i);
         }
-        NOTE.time("Assigning orders based on crease assignment");
         const B0 = [];
         const BP = new Map();
         let level = [];
@@ -201,16 +197,13 @@ export const SOLVER = {    // STATE SOLVER
             }
         }
         let [count, depth] = [0, 0];
-        NOTE.start_check("variable", BA);
         while (level.length > 0) {
-            NOTE.log(`   - ${level.length} orders assigned at depth ${depth}`);
             for (const [i, a] of level) {
                 B0.push(i);
                 BA[i] = a;
             }
             const new_level = [];
             for (const [i, a] of level) {
-                NOTE.check(count);
                 count += 1;
                 const [f1, f2] = M.decode(BF[i]);
                 const C = BT[i];
@@ -235,18 +228,11 @@ export const SOLVER = {    // STATE SOLVER
             level = new_level;
             ++depth;
         }
-        NOTE.annotate(B0, "initially assignable variables");
-        NOTE.lap();
-        NOTE.time("Finding unassigned components");
         const GB = SOLVER.get_components(BI, BF, BT, BA, B0);
-        NOTE.count(GB.length - 1, "unassigned components");
-        NOTE.lap();
         const GA = [[M.bit_encode(B0.map(i => BA[i]))]];
         for (const [i, B] of GB.entries()) {
             if (i == 0) { continue; }
-            NOTE.time(`Solving component ${i} with size ${B.length}`);
             const A = SOLVER.guess_vars(B, BI, BF, BT, BA, lim);
-            NOTE.count(A.length, "assignments");
             if (A.length == 0) {
                 return [GB, undefined];
             }
