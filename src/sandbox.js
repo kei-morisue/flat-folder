@@ -8,6 +8,8 @@ import { M } from "./flat_folder/math.js";
 import { GUI } from "./flat_folder/gui.js";
 
 import { C } from "./cut.js";
+import { RAY } from "./ray.js";
+
 import { CGUI } from "./c_gui.js";
 import { CTRL } from "./control.js";
 
@@ -52,12 +54,9 @@ export const SB = {
         //distortion
         const edges = D.GI_2_DIST(FOLD, BF, GB, GA)
         FOLD.edges = edges
+        //ray
+        RAY.init(FOLD, CELL)
         //cutting
-        const box = document.getElementById("flipfold_ray");
-        box.onchange = () => {
-            const CC = C.cut(FOLD, CELL)
-            CGUI.update_cut(CC.CUT, CC.CELL)
-        }
         const CC = C.cut(FOLD, CELL)
         CGUI.update_cut(CC.CUT, CC.CELL)
 

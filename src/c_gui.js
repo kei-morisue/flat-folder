@@ -30,12 +30,8 @@ export const CGUI = {
         const svg_fold_cut2 = document.getElementById("fold_cut2")
         const EA = CGUI.update_flat(svg, CUT)
         const [F, C] = OP.EA_2_OPNG(EA, CUT.V, CUT.EV, CUT)
-        const flip = document.getElementById("flipfold_ray").checked
-        CGUI.update_fold(F.EA, svg_fold_cut, F, C, flip)
-        // CUT.EA = EA
-        CGUI.update_fold(EA, svg_fold_cut2, CUT, CELL, flip)
-
-        // GUI.update_flat(svg_fold_cut, F)
+        CGUI.update_fold(F.EA, svg_fold_cut, F, C, false)
+        CGUI.update_fold(EA, svg_fold_cut2, CUT, CELL, false)
 
     },
     update_flat: (svg, CUT) => {
@@ -115,7 +111,6 @@ export const CGUI = {
                     const [i_p1, i_p2] = SP[i_s]
                     creases.push([Q[i_p1], Q[i_p2]])
                     const [i_f1, i_f2] = FOLD.EF[i_e]
-                    let flip = false
                     const b = a == "MC" ? "VC" : a == "VC" ? "MC" : "FC"
                     let c = undefined
                     if (FOLD.Ff[i_f1] == FOLD.Ff[i_f2]) {

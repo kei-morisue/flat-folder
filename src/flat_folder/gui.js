@@ -14,6 +14,7 @@ export const GUI = {   // INTERFACE
         DEFAULT: 1,
 
     },
+    RADIUS: { normal: 5, hover: 10, select: 50 },
     COLORS: {
         background: "lightgreen",
         active: "yellow",
@@ -30,6 +31,14 @@ export const GUI = {   // INTERFACE
         face: {
             top: "gray",
             bottom: "white",
+        },
+        point: {
+            normal: "black", active: "red",
+            select: "blue",
+            opacity: {
+                normal: 0.1,
+                hover: 1,
+            },
         },
         rand: ["lime", "red", "blue", "green", "aqua", "orange", "pink",
             "purple", "brown", "darkviolet", "teal", "olivedrab", "fuchsia",

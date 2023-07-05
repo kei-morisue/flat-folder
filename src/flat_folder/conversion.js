@@ -644,10 +644,10 @@ export const X = {     // CONVERSION
         FOLD.eps = M.min_line_length(L) / M.EPS / 1000;
         const [P, SP, SE] = X.L_2_V_EV_EL(L, FOLD.eps);
         const P_norm = M.normalize_points(P);
-        const [, CP] = X.V_EV_2_VV_FV(P, SP);
+        const [PP, CP] = X.V_EV_2_VV_FV(P, SP);
         const [SC, CS] = X.EV_FV_2_EF_FE(SP, CP);
         const [CF, FC] = X.EF_FV_SP_SE_CP_SC_2_CF_FC(EF, FV, SP, SE, CP, SC);
-        return { P, P_norm, SP, SE, CP, CS, SC, CF, FC };
+        return { P, P_norm, SP, SE, PP, CP, CS, SC, CF, FC };
     },
 
     FOLD_CELL_2_BF_BT: (FOLD, CELL) => {

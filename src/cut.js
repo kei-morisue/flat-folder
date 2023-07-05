@@ -9,21 +9,7 @@ import { CTRL } from "./control.js";
 
 
 export const C = {
-    cut: (FOLD, CELL) => {
-
-        // srub cut ray
-        const p = [0.5, 10]
-        const q = [0.5, -10]
-        const ray = [p, q]
-        //const svg_cut = document.getElementById("flat_cut")
-        const svg_ray = document.getElementById("fold_ray")
-        const svg_fold_cut = document.getElementById("fold_cut")
-
-        // rendering
-        const box = document.getElementById("flipfold_ray");
-        const flip = box.checked
-        CGUI.update_ray(svg_ray, FOLD, CELL, ray, flip)
-
+    cut: (FOLD, CELL, ray = [[0.5, 10], [0.5, -10]]) => {
 
         // building CUT
         const CUT = C.FOLD_2_CUT(FOLD, ray);
@@ -53,7 +39,7 @@ export const C = {
         const EC = XCUT.EF_EA_FG_EA0_2_EC(EF, EA, FG, EA0)
 
         //determining group sides
-        const Fs = XCUT.EF_EC_FG_FE_2_Fs(EF, EC, FG, FE, FOLD)
+        const Fs = XCUT.EF_EC_FG_FE_2_Fs(EF, EC, FG, FE, EA0)
         const sG = XCUT.Fs_FG_2_sG(Fs, FG)
         const GE = XCUT.GF_FE_2_GE(GF, FE)
 

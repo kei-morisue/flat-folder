@@ -2,6 +2,11 @@
     width: 100%;
 }
 
+.interaction-area {
+    width: 100vb;
+    max-width: 50%;
+}
+
 .cutselect {
     display: flex;
     flex-direction: column;

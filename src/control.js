@@ -33,6 +33,7 @@ export const CTRL = {
 
     },
 
+
     initialize_cp_select: () => {
         const sel = document.getElementById("cpselect")
         for (const k in CP) {

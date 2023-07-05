@@ -32,7 +32,7 @@ export const OP = {
         const L = EA.map((a, i_e) => {
             let assign = a
             if (a == "FC") {
-                assign = "F"
+                assign = "FC"
             }
             if (a == "MC") {
                 assign = "M"

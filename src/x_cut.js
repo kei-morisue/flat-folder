@@ -147,7 +147,7 @@ export const XCUT = {
     },
 
 
-    EF_EC_FG_FE_2_Fs: (EF, EA, FG, FE, FOLD) => {
+    EF_EC_FG_FE_2_Fs: (EF, EA, FG, FE, EA0) => {
         const Fs = new Array(FG.length);
 
         const seen = new Set();
@@ -161,9 +161,9 @@ export const XCUT = {
             seen.add(i_fq)
             for (const i_e of FE[i_fq]) {
                 const assign = EA[i_e]
-                const assign_f = FOLD.EA[i_e]
+                const assign0 = EA0[i_e]
                 const [i_f1, i_f2] = EF[i_e]
-                const queue_side = (assign == "C" && assign_f != "M" && assign_f != "V") ? !side : side;
+                const queue_side = (assign == "C" && assign0 != "M" && assign0 != "V") ? !side : side;
                 if (i_f1 == i_fq && i_f2 != undefined && !seen.has(i_f2)) {
                     queue.push([i_f2, queue_side])
                     seen.add(i_f2)
