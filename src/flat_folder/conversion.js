@@ -662,10 +662,20 @@ export const X = {     // CONVERSION
         return [BF, BT]
     },
 
-    FOLD_BF_BT_2_sol: (FOLD, BF, BT, state_limit) => {
+    FOLD_BF_BT_2_GB_GA: (FOLD, BF, BT, state_limit) => {
         const { EA, EF, Ff } = FOLD;
         const BA0 = X.EF_EA_Ff_BF_2_BA0(EF, EA, Ff, BF);
         return SOLVER.solve(BF, BT, BA0, state_limit);
     },
 
+
+    FOLD_CELL_2_BF_BT_GB_GA: (FOLD, CELL, limit = Infinity) => {
+        const [BF, BT] = X.FOLD_CELL_2_BF_BT(FOLD, CELL)
+        const sol = X.FOLD_BF_BT_2_GB_GA(FOLD, BF, BT, limit);
+        if (sol == undefined) {
+            return
+        }
+        const [GB, GA] = sol
+        return { BF, BT, GB, GA }
+    },
 };

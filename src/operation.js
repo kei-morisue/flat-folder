@@ -50,7 +50,7 @@ export const OP = {
         FOLD.Vf_norm = Vf_new
         const CELL = X.FOLD_2_CELL(FOLD)
         const [BF, BT] = X.FOLD_CELL_2_BF_BT(FOLD, CELL)
-        const sol = X.FOLD_BF_BT_2_sol(FOLD, BF, BT, Infinity)
+        const sol = X.FOLD_BF_BT_2_GB_GA(FOLD, BF, BT, Infinity)
         if (sol.length == 3) {
             debugger
             return [FOLD, CELL]
